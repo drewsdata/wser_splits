@@ -175,7 +175,6 @@ server <- function(input, output) {
     return(time_str)
   }
   
-  
   # Reactive filtered dataset for Finish Time Distribution
   filtered_wser_splits <- reactive({
     # Initial filtering without result type
