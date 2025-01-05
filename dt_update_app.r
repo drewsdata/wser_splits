@@ -314,6 +314,8 @@ server <- function(input, output) {
   })
 
 # Update the finish_summary_table to handle DNF cases and include percentages
+  # The early part of the script remains unchanged until the finish_summary_table output definition
+  
   output$finish_summary_table <- renderDT({
     # First get the base dataset with total counts before applying result filter
     base_data <- wser_splits %>%
@@ -358,12 +360,24 @@ server <- function(input, output) {
         left_join(gender_counts, by = c("year", "gender")) %>%
         # Calculate percentages
         mutate(
-          pct_overall = round(dnf_count / total_year, 4),
-          pct_gender = round(dnf_count / total_gender_year, 4)
+          percent_all = round(dnf_count / total_year, 4),
+          percent_gender = round(dnf_count / total_gender_year, 4)
         ) %>%
         # Remove helper columns
-        select(-c(total_year, total_gender_year)) %>%
+        select(-c(total_year, total_gender_year))
+      
+      # Conditionally remove percentage columns based on gender selection
+      if (input$gender == "All") {
+        summary_table <- summary_table %>%
+          select(-percent_gender)
+      } else {
+        summary_table <- summary_table %>%
+          select(-percent_all)
+      }
+      
+      summary_table <- summary_table %>%
         arrange(year, gender)
+      
     } else {
       filtered_data <- base_data %>%
         filter(case_when(
@@ -387,20 +401,34 @@ server <- function(input, output) {
         left_join(gender_counts, by = c("year", "gender")) %>%
         # Calculate percentages
         mutate(
-          pct_overall = round(finishers / total_year, 4),
-          pct_gender = round(finishers / total_gender_year, 4)
+          percent_all = round(finishers / total_year, 4),
+          percent_gender = round(finishers / total_gender_year, 4)
         ) %>%
         # Remove helper columns
-        select(-c(total_year, total_gender_year)) %>%
+        select(-c(total_year, total_gender_year))
+      
+      # Conditionally remove percentage columns based on gender selection
+      if (input$gender == "All") {
+        summary_table <- summary_table %>%
+          select(-percent_gender)
+      } else {
+        summary_table <- summary_table %>%
+          select(-percent_all)
+      }
+      
+      summary_table <- summary_table %>%
         arrange(year, gender)
     }
     
     DT::datatable(
       summary_table,
-      options = list(paging = FALSE) 
-    ) %>% 
-      # format percent
-      formatPercentage(c("pct_overall","pct_gender"), digits=0)
+      options = list(paging = FALSE)
+    ) %>%
+      formatPercentage(
+        # Dynamically set columns to format as percentage based on which ones exist
+        names(summary_table)[names(summary_table) %in% c("percent_all", "percent_gender")],
+        digits = 0
+      )
   })
   
   # Checkpoint Analysis Plot

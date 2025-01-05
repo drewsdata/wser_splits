@@ -313,18 +313,81 @@ server <- function(input, output) {
     ggplotly(p)
   })
   
-  # Update the finish_summary_table to handle DNF cases
+  # Update the finish_summary_table to handle DNF cases and include percentages
+  # The early part of the script remains unchanged until the finish_summary_table output definition
+  
   output$finish_summary_table <- renderDT({
+    # First get the base dataset with total counts before applying result filter
+    base_data <- wser_splits %>%
+      mutate(
+        time_hours = convert_to_hours(time),
+        result_type = case_when(
+          time == "dnf" ~ "dnf",
+          !is.na(convert_to_hours(time)) & convert_to_hours(time) < 24 ~ "silver",
+          !is.na(convert_to_hours(time)) & convert_to_hours(time) >= 24 & convert_to_hours(time) <= 30 ~ "bronze",
+          TRUE ~ "other"
+        )
+      ) %>%
+      filter(
+        year >= input$year_range[1],
+        year <= input$year_range[2],
+        age >= input$age_range[1],
+        age <= input$age_range[2]
+      )
+    
+    if (input$gender != "All") {
+      base_data <- base_data %>% filter(gender == input$gender)
+    }
+    
+    # Calculate total counts for percentage denominators
+    total_counts <- base_data %>%
+      group_by(year) %>%
+      summarise(total_year = n())
+    
+    gender_counts <- base_data %>%
+      group_by(year, gender) %>%
+      summarise(total_gender_year = n())
+    
     if (input$result == "dnf") {
-      summary_table <- filtered_wser_splits() %>%
+      summary_table <- base_data %>%
+        filter(result_type == "dnf") %>%
         group_by(year, gender) %>%
         summarise(
           dnf_count = n()
         ) %>%
+        # Join with total counts
+        left_join(total_counts, by = "year") %>%
+        left_join(gender_counts, by = c("year", "gender")) %>%
+        # Calculate percentages
+        mutate(
+          percent_all = round(dnf_count / total_year, 4),
+          percent_gender = round(dnf_count / total_gender_year, 4)
+        ) %>%
+        # Remove helper columns
+        select(-c(total_year, total_gender_year))
+      
+      # Conditionally remove percentage columns based on gender selection
+      if (input$gender == "All") {
+        summary_table <- summary_table %>%
+          select(-percent_gender)
+      } else {
+        summary_table <- summary_table %>%
+          select(-percent_all)
+      }
+      
+      summary_table <- summary_table %>%
         arrange(year, gender)
+      
     } else {
-      summary_table <- filtered_wser_splits() %>%
-        filter(!is.na(time_hours)) %>% 
+      filtered_data <- base_data %>%
+        filter(case_when(
+          input$result == "all_finishes" ~ result_type %in% c("silver", "bronze"),
+          input$result == "silver" ~ result_type == "silver",
+          input$result == "bronze" ~ result_type == "bronze",
+          TRUE ~ FALSE
+        ))
+      
+      summary_table <- filtered_data %>%
         group_by(year, gender) %>%
         summarise(
           finishers = n(),
@@ -333,13 +396,39 @@ server <- function(input, output) {
           min_time = as_hms(round(min(time_hours, na.rm = TRUE) * 3600, 0)),
           max_time = as_hms(round(max(time_hours, na.rm = TRUE) * 3600, 0))
         ) %>%
+        # Join with total counts
+        left_join(total_counts, by = "year") %>%
+        left_join(gender_counts, by = c("year", "gender")) %>%
+        # Calculate percentages
+        mutate(
+          percent_all = round(finishers / total_year, 4),
+          percent_gender = round(finishers / total_gender_year, 4)
+        ) %>%
+        # Remove helper columns
+        select(-c(total_year, total_gender_year))
+      
+      # Conditionally remove percentage columns based on gender selection
+      if (input$gender == "All") {
+        summary_table <- summary_table %>%
+          select(-percent_gender)
+      } else {
+        summary_table <- summary_table %>%
+          select(-percent_all)
+      }
+      
+      summary_table <- summary_table %>%
         arrange(year, gender)
     }
     
     DT::datatable(
       summary_table,
       options = list(paging = FALSE)
-    )
+    ) %>%
+      formatPercentage(
+        # Dynamically set columns to format as percentage based on which ones exist
+        names(summary_table)[names(summary_table) %in% c("percent_all", "percent_gender")],
+        digits = 0
+      )
   })
   
   # Checkpoint Analysis Plot
