@@ -304,7 +304,7 @@ server <- function(input, output) {
           geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
           theme_minimal() +
           labs(title = "Distribution of Finish Times",
-               x = "Finish Time (hours)",
+               x = "Finish Time (hh:mm:ss)",
                y = "Count") +
           facet_wrap(~year)
       }
@@ -434,6 +434,30 @@ server <- function(input, output) {
   # Checkpoint Analysis Plot
   output$checkpoint_plot <- renderPlotly({
     checkpoint_col <- paste0(input$checkpoint, "_time")
+    
+    # Create a lookup map for checkpoint names
+    checkpoint_names <- c(
+      "lyon_ridge" = "Lyon Ridge (10.3M : 16.6K)",
+      "red_star_ridge" = "Red Star Ridge  (15.8M : 25.4K)",
+      "duncan_canyon" = "Duncan Canyon  (24.4M : 39.3K)",
+      "robinson_flat" = "Robinson Flat  (30.3M : 48.8K)",
+      "millers_defeat" = "Miller's Defeat  (34.4M : 55.4K)",
+      "dusty_corners" = "Dusty Corners  (38M : 61.2K)",
+      "last_chance" = "Last Chance  (43.3M : 69.7K)",
+      "devils_thumb" = "Devil's Thumb  (47.8M : 76.9K)",
+      "el_dorado" = "El Dorado  (52.9M : 85.1K)",
+      "michigan_bluff" = "Michigan Bluff  (55.7M : 89.6K)",
+      "foresthill" = "Foresthill  (62M : 99.8K)",
+      "peachstone_cal_2" = "Peachstone (Cal-2)  (70.7M : 113.8K)",
+      "rucky_chucky" = "Rucky Chucky  (78M : 125.5K)",
+      "green_gate" = "Green Gate  (79.8M : 128.4K)",
+      "auburn_lake_trails" = "Auburn Lake Trails  (85.2M : 137.1K)",
+      "quarry_road" = "Quarry Road  (90.7M : 146K)",
+      "pointed_rocks" = "Pointed Rocks  (94.3M : 151.8K)",
+      "robie_point" = "Robie Point  (98.9M : 159.2K)",
+      "finish" = "Finish (Placer H.S. Track)  (100.2M : 161.3K)"
+    )
+    
     ggplotly(
       ggplot(filtered_wser_splits_checkpoint(), 
              aes_string(x = "age", y = checkpoint_col, color = "gender")) +
@@ -441,12 +465,11 @@ server <- function(input, output) {
         geom_smooth(method = "loess") +
         theme_minimal() +
         scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
-        labs(title = paste("Time vs Age at", input$checkpoint),
+        labs(title = paste("Time vs Age to", checkpoint_names[input$checkpoint]),
              x = "Age",
-             y = "Time (hours)")
+             y = "Time (hh:mm:ss)")
     )
   })
-  
   # Checkpoint Summary Table
   output$checkpoint_summary_table <- renderDT({
     checkpoint_col <- paste0(input$checkpoint, "_time")
