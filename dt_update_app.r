@@ -10,6 +10,8 @@ library(here)
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
   clean_names()
 
+wser_cp_table <- read_csv(here("data","wser_cp_table.csv"))
+
 # UI Definition
 ui <- fluidPage(
   titlePanel("WSER 100 Results Analysis"),
@@ -117,25 +119,9 @@ ui <- fluidPage(
                  # Checkpoint selector (unchanged)
                  selectInput("checkpoint",
                              "Select Checkpoint for Analysis:",
-                             choices = c("Lyon Ridge (10.3M : 16.6K)" = "lyon_ridge",
-                                         "Red Star Ridge  (15.8M : 25.4K)" =  "red_star_ridge",
-                                         "Duncan Canyon  (24.4M : 39.3K)" =  "duncan_canyon",
-                                         "Robinson Flat  (30.3M : 48.8K)" =  "robinson_flat",
-                                         "Miller's Defeat  (34.4M : 55.4K)" =  "millers_defeat",
-                                         "Dusty Corners  (38M : 61.2K)" =  "dusty_corners",
-                                         "Last Chance  (43.3M : 69.7K)" =  "last_chance",
-                                         "Devil's Thumb  (47.8M : 76.9K)" =  "devils_thumb",
-                                         "El Dorado  (52.9M : 85.1K)" =  "el_dorado",
-                                         "Michigan Bluff  (55.7M : 89.6K)" =  "michigan_bluff",
-                                         "Foresthill  (62M : 99.8K)" =  "foresthill",
-                                         "Peachstone (Cal-2)  (70.7M : 113.8K)" =  "peachstone_cal_2",
-                                         "Rucky Chucky  (78M : 125.5K)" =  "rucky_chucky",
-                                         "Green Gate  (79.8M : 128.4K)" =  "green_gate",
-                                         "Auburn Lake Trails  (85.2M : 137.1K)" =  "auburn_lake_trails",
-                                         "Quarry Road  (90.7M : 146K)" =  "quarry_road",
-                                         "Pointed Rocks  (94.3M : 151.8K)" =  "pointed_rocks",
-                                         "Robie Point  (98.9M : 159.2K)" =  "robie_point",
-                                         "Finish (Placer H.S. Track)  (100.2M : 161.3K)" =  "finish"))
+                             choices = setNames(wser_cp_table$cp_column, 
+                                                wser_cp_table$cp_display_name)
+                             )
                ),
                mainPanel(
                  plotlyOutput("checkpoint_plot"),
@@ -444,33 +430,13 @@ server <- function(input, output) {
     checkpoint_col <- paste0(input$checkpoint, "_time")
     
     # Create a lookup map for checkpoint names
-    checkpoint_names <- c(
-      "lyon_ridge" = "Lyon Ridge (10.3M : 16.6K)",
-      "red_star_ridge" = "Red Star Ridge  (15.8M : 25.4K)",
-      "duncan_canyon" = "Duncan Canyon  (24.4M : 39.3K)",
-      "robinson_flat" = "Robinson Flat  (30.3M : 48.8K)",
-      "millers_defeat" = "Miller's Defeat  (34.4M : 55.4K)",
-      "dusty_corners" = "Dusty Corners  (38M : 61.2K)",
-      "last_chance" = "Last Chance  (43.3M : 69.7K)",
-      "devils_thumb" = "Devil's Thumb  (47.8M : 76.9K)",
-      "el_dorado" = "El Dorado  (52.9M : 85.1K)",
-      "michigan_bluff" = "Michigan Bluff  (55.7M : 89.6K)",
-      "foresthill" = "Foresthill  (62M : 99.8K)",
-      "peachstone_cal_2" = "Peachstone (Cal-2)  (70.7M : 113.8K)",
-      "rucky_chucky" = "Rucky Chucky  (78M : 125.5K)",
-      "green_gate" = "Green Gate  (79.8M : 128.4K)",
-      "auburn_lake_trails" = "Auburn Lake Trails  (85.2M : 137.1K)",
-      "quarry_road" = "Quarry Road  (90.7M : 146K)",
-      "pointed_rocks" = "Pointed Rocks  (94.3M : 151.8K)",
-      "robie_point" = "Robie Point  (98.9M : 159.2K)",
-      "finish" = "Finish (Placer H.S. Track)  (100.2M : 161.3K)"
-    )
+    checkpoint_names <- setNames(as.character(wser_cp_table$cp_display_name), wser_cp_table$cp_column)
     
     male_color <- "#91E5E2"
     
     p <- ggplot(filtered_wser_splits_checkpoint()) +
       geom_point(aes_string(x = "age", y = checkpoint_col, color = "gender"), alpha = 0.6) +
-      geom_smooth(aes_string(x = "age", y = checkpoint_col, color = "gender", text = NULL), method = "loess") +
+      geom_smooth(aes_string(x = "age", y = checkpoint_col, color = "gender"), method = "loess") +
       theme_minimal() +
       scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
       labs(title = paste("Time vs Age to", checkpoint_names[input$checkpoint]),
@@ -480,9 +446,19 @@ server <- function(input, output) {
     if (input$gender_checkpoint == "M") {
       p <- p + scale_color_manual(values = c("M" = male_color))
     }
-    ggplotly(p) %>% config(displayModeBar = FALSE) 
-
+    
+    plt <- ggplotly(p) %>% 
+      config(displayModeBar = FALSE)
+    
+    for(i in seq_along(plt$x$data)) {
+      if(plt$x$data[[i]]$type == "scatter" && plt$x$data[[i]]$mode == "lines") {
+        plt$x$data[[i]]$hoverinfo <- "skip"
+      }
+    }
+    
+    plt
   })
+  
   # Checkpoint Summary Table
   output$checkpoint_summary_table <- renderDT({
     checkpoint_col <- paste0(input$checkpoint, "_time")
