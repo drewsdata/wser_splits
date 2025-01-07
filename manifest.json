@@ -3494,16 +3494,25 @@
   },
   "files": {
     "app.r": {
-      "checksum": "7a1bb5055f50e6ac426e7f6c6896e7fa"
+      "checksum": "4a5b148f6def91b48f42467aee462958"
     },
     "app.txt": {
-      "checksum": "832e6614e64463d9ceb134e3580084db"
+      "checksum": "4a5b148f6def91b48f42467aee462958"
+    },
+    "data/wser_cp_table.csv": {
+      "checksum": "e64164aa1802a2dca2d00ddc35567f61"
+    },
+    "data/wser_cp_table.txt": {
+      "checksum": "e64164aa1802a2dca2d00ddc35567f61"
     },
     "data/wser_split_data_2017_2024.csv": {
       "checksum": "a80b75215d196801e2c63e176e6ca010"
     },
     "dt_update_app.r": {
-      "checksum": "da58c5c8342291b4aea45363b3d136fe"
+      "checksum": "4a5b148f6def91b48f42467aee462958"
+    },
+    "gem_update_app.r": {
+      "checksum": "4d40015b73bee384b8cd6459fd9c4b53"
     },
     "LICENSE": {
       "checksum": "1ebbd3e34237af26da5dc08a4e440464"
