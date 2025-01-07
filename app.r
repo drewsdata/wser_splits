@@ -290,7 +290,8 @@ server <- function(input, output) {
                y = "DNF Count")
       }
       
-      ggplotly(p, tooltip = c("gender","text"))
+      ggplotly(p, tooltip = c("gender","text")) %>% 
+        config(displayModeBar = FALSE)
       
     } else {
       # For finish times, show the histogram with updated x-axis breaks
@@ -315,7 +316,7 @@ server <- function(input, output) {
           facet_wrap(~year)
       }
       
-      ggplotly(p)
+      ggplotly(p) %>% config(displayModeBar = FALSE)
     }
   })
   
@@ -465,17 +466,22 @@ server <- function(input, output) {
       "finish" = "Finish (Placer H.S. Track)  (100.2M : 161.3K)"
     )
     
-    ggplotly(
-      ggplot(filtered_wser_splits_checkpoint(), 
-             aes_string(x = "age", y = checkpoint_col, color = "gender")) +
-        geom_point(alpha = 0.6) +
-        geom_smooth(method = "loess") +
-        theme_minimal() +
-        scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
-        labs(title = paste("Time vs Age to", checkpoint_names[input$checkpoint]),
-             x = "Age",
-             y = "Time (hh:mm:ss)")
-    )
+    male_color <- "#91E5E2"
+    
+    p <- ggplot(filtered_wser_splits_checkpoint()) +
+      geom_point(aes_string(x = "age", y = checkpoint_col, color = "gender"), alpha = 0.6) +
+      geom_smooth(aes_string(x = "age", y = checkpoint_col, color = "gender", text = NULL), method = "loess") +
+      theme_minimal() +
+      scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
+      labs(title = paste("Time vs Age to", checkpoint_names[input$checkpoint]),
+           x = "Age",
+           y = "Time (hh:mm:ss)")
+    
+    if (input$gender_checkpoint == "M") {
+      p <- p + scale_color_manual(values = c("M" = male_color))
+    }
+    ggplotly(p) %>% config(displayModeBar = FALSE) 
+    
   })
   # Checkpoint Summary Table
   output$checkpoint_summary_table <- renderDT({
