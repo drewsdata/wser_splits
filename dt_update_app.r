@@ -262,58 +262,65 @@ server <- function(input, output) {
   
   # Finish Time Distribution Plot
   output$finish_dist_plot <- renderPlotly({
-    
-    # Define a color for male # Example: a shade of blue
+    # Define a color for male
     male_color <- "#91E5E2"
     
     if (input$result == "dnf") {
-      # For DNF cases, show a bar chart of DNF counts by year and gender
-      # Conditional color for males
+      # DNF plot remains unchanged since it doesn't use time axis
       if (input$gender == "M") {
-        p <- ggplot(filtered_wser_splits(), aes(x = as.factor(year), fill = gender)) +
-          geom_bar(position = "dodge") +
+        p <- ggplot(filtered_wser_splits()) +
+          geom_bar(aes(x = as.factor(year), 
+                       fill = gender,
+                       text = paste0("Count: ", stat(count))),
+                   position = "dodge") +
           scale_fill_manual(values = c("M" = male_color), labels = c("M")) +
           theme_minimal() +
-          labs(title = "Distribution of DNFs by Year",
+          labs(title = "DNFs by Year",
                x = "Year",
-               y = "Number of DNFs")
+               y = "DNF Count")
       } else {
-        p <- ggplot(filtered_wser_splits(), aes(x = as.factor(year), fill = gender)) +
-          geom_bar(position = "dodge") +
+        p <- ggplot(filtered_wser_splits()) +
+          geom_bar(aes(x = as.factor(year), 
+                       fill = gender,
+                       text = paste0("count: ", stat(count))),
+                   position = "dodge") +
           theme_minimal() +
-          labs(title = "Distribution of DNFs by Year",
+          labs(title = "DNFs by Year",
                x = "Year",
-               y = "Number of DNFs")
+               y = "DNF Count")
       }
       
+      ggplotly(p, tooltip = c("gender","text"))
+      
     } else {
-      # For finish times, show the original histogram
-      # Conditional coloring based on gender input
-      if(input$gender == "M"){
+      # For finish times, show the histogram with updated x-axis breaks
+      if(input$gender == "M") {
         p <- ggplot(filtered_wser_splits(), aes(x = time_hours, fill = gender)) +
           geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
           scale_fill_manual(values = c("M" = male_color), labels = c("M")) +
+          scale_x_continuous(breaks = seq(0, 30, by = 5)) +  # Add 5-hour breaks
           theme_minimal() +
           labs(title = "Distribution of Finish Times",
                x = "Finish Time (hours)",
                y = "Count") +
           facet_wrap(~year)
-      } else{
-        
+      } else {
         p <- ggplot(filtered_wser_splits(), aes(x = time_hours, fill = gender)) +
           geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
+          scale_x_continuous(breaks = seq(0, 30, by = 5)) +  # Add 5-hour breaks
           theme_minimal() +
           labs(title = "Distribution of Finish Times",
-               x = "Finish Time (hh:mm:ss)",
+               x = "Finish Time (hours)",
                y = "Count") +
           facet_wrap(~year)
       }
+      
+      ggplotly(p)
     }
-    
-    ggplotly(p)
   })
-
-# Update the finish_summary_table to handle DNF cases and include percentages
+  
+  
+  # Update the finish_summary_table to handle DNF cases and include percentages
   # The early part of the script remains unchanged until the finish_summary_table output definition
   
   output$finish_summary_table <- renderDT({
