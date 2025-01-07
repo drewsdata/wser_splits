@@ -118,10 +118,10 @@ ui <- fluidPage(
                  
                  # Checkpoint selector (unchanged)
                  selectInput("checkpoint",
-                             "Select Checkpoint for Analysis:",
+                             "Select Start Checkpoint:",
                              choices = setNames(wser_cp_table$cp_column, 
                                                 wser_cp_table$cp_display_name)
-                             )
+                 )
                ),
                mainPanel(
                  plotlyOutput("checkpoint_plot"),
