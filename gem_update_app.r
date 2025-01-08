@@ -458,9 +458,13 @@ server <- function(input, output, session) {
     
     p <- ggplot(filtered_wser_splits_checkpoint()) +
       geom_point(aes_string(x = "age", 
-                            y = paste0(end_checkpoint_col, " - ", start_checkpoint_col), 
-                            color = "gender"), alpha = 0.6) +
-      geom_smooth(aes_string(x = "age", y = paste0(end_checkpoint_col, " - ", start_checkpoint_col), color = "gender"), method = "loess") +
+                            y = paste0(end_checkpoint_col, " - ", start_checkpoint_col),
+                            color = "gender"),
+                 alpha = 0.6) +
+      geom_smooth(aes_string(x = "age", 
+                             y = paste0(end_checkpoint_col, " - ", start_checkpoint_col),
+                             color = "gender"), 
+                  method = "loess") +
       theme_minimal() +
       scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
       labs(title = paste("Time vs Age Between",

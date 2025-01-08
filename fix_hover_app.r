@@ -456,17 +456,29 @@ server <- function(input, output, session) {
     
     male_color <- "#91E5E2"
     
-    p <- ggplot(filtered_wser_splits_checkpoint()) +
-      geom_point(aes_string(x = "age", 
-                            y = paste0(end_checkpoint_col, " - ", start_checkpoint_col),
-                            color = "gender"),
+    # Calculate the difference *before* plotting
+    plot_data <- filtered_wser_splits_checkpoint() %>%
+      mutate(
+        time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
+        time_diff_hms = as_hms(round(time_diff, 0)) # Time in HH:MM:SS format
+      )
+    
+    p <- ggplot(plot_data) +
+      geom_point(aes(x = age, 
+                     y = time_diff, # Use time_diff for plotting (numeric)
+                     color = gender,
+                     text = paste0("gender: ", gender,
+                                   "<br>age: ", age,
+                                   "<br>", 
+                                   checkpoint_names[input$end_checkpoint], " - ", checkpoint_names[input$start_checkpoint], ": ",
+                                   time_diff_hms)), # Use time_diff_hms for display
                  alpha = 0.6) +
-      geom_smooth(aes_string(x = "age", 
-                             y = paste0(end_checkpoint_col, " - ", start_checkpoint_col),
-                             color = "gender"), 
+      geom_smooth(aes(x = age, 
+                      y = time_diff,
+                      color = gender), 
                   method = "loess") +
       theme_minimal() +
-      scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
+      scale_y_continuous(labels = function(x) strftime(as.POSIXct(x, origin = "1970-01-01"), format = "%H:%M:%S")) + # Keep scale in seconds
       labs(title = paste("Time vs Age Between",
                          checkpoint_names[input$start_checkpoint],
                          "and",
@@ -478,7 +490,7 @@ server <- function(input, output, session) {
       p <- p + scale_color_manual(values = c("M" = male_color))
     }
     
-    plt <- ggplotly(p) %>% 
+    plt <- ggplotly(p, tooltip = "text") %>% 
       config(displayModeBar = FALSE)
     
     for(i in seq_along(plt$x$data)) {
