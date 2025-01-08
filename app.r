@@ -14,6 +14,7 @@ wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv"))
 
 # UI Definition
 ui <- fluidPage(
+  
   titlePanel("WSER 100 Results Analysis"),
   
   tabsetPanel(
@@ -129,8 +130,8 @@ ui <- fluidPage(
                  ),
                  # Add colored divider
                  tags$div(
-                   style = "margin: 6px 0;  /* Add space above and below */
-                           border-bottom: 6px dashed #87CEEB; 
+                   style = "margin: 4px 0;  /* Add space above and below */
+                           border-bottom: 4px solid #87CEEB; 
                            width: 100%;" 
                  ),
                  # Course Checkpoints header with hyperlink
