@@ -9,8 +9,8 @@ library(here)
 
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
   clean_names()
-
 wser_cp_table <- read_csv(here("data","wser_cp_table.csv"))
+wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv"))
 
 # UI Definition
 ui <- fluidPage(
@@ -126,7 +126,21 @@ ui <- fluidPage(
                  selectInput("end_checkpoint",
                              "Select End Checkpoint:",
                              choices = NULL
-                 )
+                 ),
+                 # Add colored divider
+                 tags$div(
+                   style = "margin: 6px 0;  /* Add space above and below */
+                           border-bottom: 6px dashed #87CEEB; 
+                           width: 100%;" 
+                 ),
+                 # Course Checkpoints header with hyperlink
+                 tags$h4("Checkpoint distances  ",
+                   tags$a("(Check here for WSER offical aid stations)", 
+                          href = "https://www.wser.org/course/aid-stations/",
+                          target = "_blank",  # Opens in new tab
+                          style = "color: #4682B4; text-decoration: none;")  # Steel blue color, no underline
+                 ),
+                 DTOutput("course_checkpoints_table")
                ),
                mainPanel(
                  plotlyOutput("checkpoint_plot"),
@@ -139,6 +153,21 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output, session) {
+  
+  # Add output for course checkpoints table
+  output$course_checkpoints_table <- renderDT({
+    datatable(
+      wser_course_checkpoints,
+      options = list(
+        pageLength = 25,
+        #scrollY = "300px",
+        #scrollCollapse = TRUE,
+        dom = 't',  # Only show table, no search/pagination controls
+        ordering = FALSE
+      ),
+      rownames = FALSE
+    )
+  })
   
   convert_to_hours <- function(time_str) {
     if (is.character(time_str)) {
