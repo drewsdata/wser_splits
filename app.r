@@ -470,7 +470,8 @@ server <- function(input, output, session) {
                      text = paste0("gender: ", gender,
                                    "<br>age: ", age,
                                    "<br>", 
-                                   checkpoint_names[input$end_checkpoint], " - ", checkpoint_names[input$start_checkpoint], ": ",
+                                   # checkpoint_names[input$end_checkpoint], " - ", checkpoint_names[input$start_checkpoint], ": ",
+                                   checkpoint_names[input$start_checkpoint], " - ", checkpoint_names[input$end_checkpoint], ": ",
                                    time_diff_hms)), # Use time_diff_hms for display
                  alpha = 0.6) +
       geom_smooth(aes(x = age, 
