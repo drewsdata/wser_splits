@@ -9,8 +9,8 @@ library(here)
 
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
   clean_names()
-
 wser_cp_table <- read_csv(here("data","wser_cp_table.csv"))
+wser_course_checkpoints.csv <- read_csv(here("data","wser_course_checkpoints.csv"))
 
 # UI Definition
 ui <- fluidPage(

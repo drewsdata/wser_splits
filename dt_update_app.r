@@ -116,11 +116,16 @@ ui <- fluidPage(
                              max = max(wser_splits$age, na.rm = TRUE),
                              value = c(min(wser_splits$age, na.rm = TRUE), max(wser_splits$age, na.rm = TRUE))),
                  
-                 # Checkpoint selector (unchanged)
-                 selectInput("checkpoint",
+                 # Checkpoint selectors
+                 selectInput("start_checkpoint",
                              "Select Start Checkpoint:",
                              choices = setNames(wser_cp_table$cp_column, 
                                                 wser_cp_table$cp_display_name)
+                 ),
+                 
+                 selectInput("end_checkpoint",
+                             "Select End Checkpoint:",
+                             choices = NULL
                  )
                ),
                mainPanel(
@@ -133,7 +138,7 @@ ui <- fluidPage(
 )
 
 # Server logic
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   convert_to_hours <- function(time_str) {
     if (is.character(time_str)) {
@@ -244,6 +249,22 @@ server <- function(input, output) {
              gender %in% input$gender_position,
              age >= input$age_range_position[1],
              age <= input$age_range_position[2])
+  })
+  
+  # Update end_checkpoint choices
+  observe({
+    req(input$start_checkpoint)
+    
+    start_cp_number <- wser_cp_table %>%
+      filter(cp_column == input$start_checkpoint) %>%
+      pull(cp_number)
+    
+    choices <- wser_cp_table %>%
+      filter(cp_number > start_cp_number) %>%
+      # Use setNames to properly create the choices vector
+      { setNames(.$cp_column, .$cp_display_name) }
+    
+    updateSelectInput(session, "end_checkpoint", choices = choices)
   })
   
   # Finish Time Distribution Plot
@@ -427,19 +448,42 @@ server <- function(input, output) {
   
   # Checkpoint Analysis Plot
   output$checkpoint_plot <- renderPlotly({
-    checkpoint_col <- paste0(input$checkpoint, "_time")
+    start_checkpoint_col <- paste0(input$start_checkpoint, "_time")
+    end_checkpoint_col <- paste0(input$end_checkpoint, "_time")
     
     # Create a lookup map for checkpoint names
     checkpoint_names <- setNames(as.character(wser_cp_table$cp_display_name), wser_cp_table$cp_column)
     
     male_color <- "#91E5E2"
     
-    p <- ggplot(filtered_wser_splits_checkpoint()) +
-      geom_point(aes_string(x = "age", y = checkpoint_col, color = "gender"), alpha = 0.6) +
-      geom_smooth(aes_string(x = "age", y = checkpoint_col, color = "gender"), method = "loess") +
+    # Calculate the difference *before* plotting
+    plot_data <- filtered_wser_splits_checkpoint() %>%
+      mutate(
+        time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
+        time_diff_hms = as_hms(round(time_diff, 0)) # Time in HH:MM:SS format
+      )
+    
+    p <- ggplot(plot_data) +
+      geom_point(aes(x = age, 
+                     y = time_diff, # Use time_diff for plotting (numeric)
+                     color = gender,
+                     text = paste0("gender: ", gender,
+                                   "<br>age: ", age,
+                                   "<br>", 
+                                   # checkpoint_names[input$end_checkpoint], " - ", checkpoint_names[input$start_checkpoint], ": ",
+                                   checkpoint_names[input$start_checkpoint], " - ", checkpoint_names[input$end_checkpoint], ": ",
+                                   time_diff_hms)), # Use time_diff_hms for display
+                 alpha = 0.6) +
+      geom_smooth(aes(x = age, 
+                      y = time_diff,
+                      color = gender), 
+                  method = "loess") +
       theme_minimal() +
       scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
-      labs(title = paste("Time vs Age to", checkpoint_names[input$checkpoint]),
+      labs(title = paste("Time vs Age Between",
+                         checkpoint_names[input$start_checkpoint],
+                         "and",
+                         checkpoint_names[input$end_checkpoint]),
            x = "Age",
            y = "Time (hh:mm:ss)")
     
@@ -447,7 +491,7 @@ server <- function(input, output) {
       p <- p + scale_color_manual(values = c("M" = male_color))
     }
     
-    plt <- ggplotly(p) %>% 
+    plt <- ggplotly(p, tooltip = "text") %>% 
       config(displayModeBar = FALSE)
     
     for(i in seq_along(plt$x$data)) {
@@ -461,23 +505,32 @@ server <- function(input, output) {
   
   # Checkpoint Summary Table
   output$checkpoint_summary_table <- renderDT({
-    checkpoint_col <- paste0(input$checkpoint, "_time")
+    req(input$start_checkpoint, input$end_checkpoint)
+    
+    start_checkpoint_col <- paste0(input$start_checkpoint, "_time")
+    end_checkpoint_col <- paste0(input$end_checkpoint, "_time")
+    
+    summary_data <- filtered_wser_splits_checkpoint() %>%
+      filter(!is.na(!!sym(start_checkpoint_col)), !is.na(!!sym(end_checkpoint_col))) %>%
+      mutate(
+        time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col)
+      )
+    
     DT::datatable(
-      filtered_wser_splits_checkpoint() %>%
-        filter(!is.na(!!sym(checkpoint_col))) %>%
+      summary_data %>%
         group_by(year, gender) %>%
         summarise(
           runners = n(),
-          avg_decimal_hours = mean(!!sym(checkpoint_col), na.rm = TRUE),
+          avg_decimal_hours = mean(time_diff, na.rm = TRUE),
           avg_seconds = avg_decimal_hours,
           avg_time = as_hms(round(avg_seconds,0)),
-          median_decimal_hours = median(!!sym(checkpoint_col), na.rm = TRUE),
+          median_decimal_hours = median(time_diff, na.rm = TRUE),
           median_seconds = median_decimal_hours,
           median_time = as_hms(round(median_seconds, 0)),
-          min_decimal_hours = min(!!sym(checkpoint_col), na.rm = TRUE),
+          min_decimal_hours = min(time_diff, na.rm = TRUE),
           min_seconds = min_decimal_hours,
           min_time = as_hms(round(min_seconds,0)),
-          max_decimal_hours = max(!!sym(checkpoint_col), na.rm = TRUE),
+          max_decimal_hours = max(time_diff, na.rm = TRUE),
           max_seconds = max_decimal_hours,
           max_time = as_hms(round(max_seconds,0))
         ) %>%
