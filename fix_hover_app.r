@@ -478,7 +478,7 @@ server <- function(input, output, session) {
                       color = gender), 
                   method = "loess") +
       theme_minimal() +
-      scale_y_continuous(labels = function(x) strftime(as.POSIXct(x, origin = "1970-01-01"), format = "%H:%M:%S")) + # Keep scale in seconds
+      scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
       labs(title = paste("Time vs Age Between",
                          checkpoint_names[input$start_checkpoint],
                          "and",
