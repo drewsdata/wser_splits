@@ -14,7 +14,7 @@ wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv"))
 
 # UI Definition
 ui <- fluidPage(
-
+  
   titlePanel("WSER 100 Results Analysis"),
   
   tabsetPanel(
@@ -136,10 +136,10 @@ ui <- fluidPage(
                  ),
                  # Course Checkpoints header with hyperlink
                  tags$h4("Checkpoint distances  ",
-                   tags$a("(Check here for WSER offical aid stations)", 
-                          href = "https://www.wser.org/course/aid-stations/",
-                          target = "_blank",  # Opens in new tab
-                          style = "color: #4682B4; text-decoration: none;")  # Steel blue color, no underline
+                         tags$a("(Check here for WSER offical aid stations)", 
+                                href = "https://www.wser.org/course/aid-stations/",
+                                target = "_blank",  # Opens in new tab
+                                style = "color: #4682B4; text-decoration: none;")  # Steel blue color, no underline
                  ),
                  DTOutput("course_checkpoints_table")
                ),
@@ -154,7 +154,7 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output, session) {
-
+  
   # Add output for course checkpoints table
   output$course_checkpoints_table <- renderDT({
     datatable(
