@@ -479,6 +479,8 @@ server <- function(input, output, session) {
   
   # Modified checkpoint plot code
   output$checkpoint_plot <- renderPlotly({
+    req(input$start_checkpoint, input$end_checkpoint)
+    
     start_checkpoint_col <- paste0(input$start_checkpoint, "_time")
     end_checkpoint_col <- paste0(input$end_checkpoint, "_time")
     
@@ -490,25 +492,42 @@ server <- function(input, output, session) {
       mutate(
         time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
         time_diff_hms = as_hms(round(time_diff, 0)) # Time in HH:MM:SS format
-      )
+      ) %>%
+      filter(!is.na(time_diff))  # Remove NA values
     
-    p <- ggplot(plot_data) +
+    # Check if we have any data
+    if (nrow(plot_data) == 0) {
+      # Create an empty plot with a message
+      p <- ggplot() +
+        annotate("text", x = 0.5, y = 0.5, 
+                 label = "No data available for the selected filters",
+                 size = 6) +
+        theme_void() +
+        xlim(0, 1) + ylim(0, 1)
+      
+      return(ggplotly(p) %>% config(displayModeBar = FALSE))
+    }
+    
+    # Check if we have enough data for smoothing (at least 5 points per group)
+    min_group_size <- plot_data %>%
+      group_by(gender) %>%
+      summarise(n = n()) %>%
+      pull(n) %>%
+      min()
+    
+    base_plot <- ggplot(plot_data) +
       geom_point(aes(x = age, 
                      y = time_diff,
                      color = gender,
                      text = paste0("gender: ", gender,
                                    "<br>age: ", age,
                                    "<br>", 
-                                   checkpoint_names[input$start_checkpoint], " - ", checkpoint_names[input$end_checkpoint], ": ",
+                                   checkpoint_names[input$start_checkpoint], " - ", 
+                                   checkpoint_names[input$end_checkpoint], ": ",
                                    time_diff_hms)),
                  alpha = 0.6) +
-      geom_smooth(aes(x = age, 
-                      y = time_diff,
-                      color = gender), 
-                  method = "loess") +
       theme_minimal() +
       scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
-      # Always set both colors explicitly, regardless of filtering
       scale_color_manual(values = gender_colors) +
       labs(title = paste("Time vs Age Between",
                          checkpoint_names[input$start_checkpoint],
@@ -517,10 +536,22 @@ server <- function(input, output, session) {
            x = "Age",
            y = "Time (hh:mm:ss)")
     
+    # Add smooth lines only if we have enough data
+    if (min_group_size >= 5) {
+      p <- base_plot +
+        geom_smooth(aes(x = age, 
+                        y = time_diff,
+                        color = gender), 
+                    method = "loess",
+                    se = TRUE)
+    } else {
+      p <- base_plot
+    }
+    
     plt <- ggplotly(p, tooltip = "text") %>% 
       config(displayModeBar = FALSE)
     
-    # Remove hover info from smooth lines
+    # Remove hover info from smooth lines if they exist
     for(i in seq_along(plt$x$data)) {
       if(plt$x$data[[i]]$type == "scatter" && plt$x$data[[i]]$mode == "lines") {
         plt$x$data[[i]]$hoverinfo <- "skip"
