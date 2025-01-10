@@ -299,68 +299,66 @@ server <- function(input, output, session) {
   
   # Finish Time Distribution Plot
   output$finish_dist_plot <- renderPlotly({
-    # Define a color for male
-    male_color <- "#91E5E2"
+    # Define colors for consistent gender representation
+    gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")
+    
+    # Function to determine appropriate breaks based on data range
+    get_breaks <- function(x) {
+      if (max(x) <= 10) {
+        # For small counts, use integers from 0 to max
+        return(seq(0, ceiling(max(x)), by = 1))
+      } else {
+        # For larger counts, use pretty breaks
+        return(pretty(c(0, max(x)), n = 8))
+      }
+    }
     
     if (input$result == "dnf") {
-      # DNF plot remains unchanged since it doesn't use time axis
-      if (input$gender == "M") {
-        p <- ggplot(filtered_wser_splits()) +
-          geom_bar(aes(x = as.factor(year), 
-                       fill = gender,
-                       text = paste0("Count: ", stat(count))),
-                   position = "dodge") +
-          scale_fill_manual(values = c("M" = male_color), labels = c("M")) +
-          theme_minimal() +
-          labs(title = "DNFs by Year",
-               x = "Year",
-               y = "DNF Count")
-      } else {
-        p <- ggplot(filtered_wser_splits()) +
-          geom_bar(aes(x = as.factor(year), 
-                       fill = gender,
-                       text = paste0("count: ", stat(count))),
-                   position = "dodge") +
-          theme_minimal() +
-          labs(title = "DNFs by Year",
-               x = "Year",
-               y = "DNF Count")
-      }
+      # Get count data for DNF plot
+      count_data <- filtered_wser_splits() %>%
+        count(year, gender) %>%
+        pull(n)
+      
+      # DNF plot with consistent colors
+      p <- ggplot(filtered_wser_splits()) +
+        geom_bar(aes(x = as.factor(year), 
+                     fill = gender,
+                     text = paste0("Count: ", stat(count))),
+                 position = "dodge") +
+        scale_fill_manual(values = gender_colors) +
+        scale_y_continuous(breaks = get_breaks) +
+        theme_minimal() +
+        labs(title = "DNFs by Year",
+             x = "Year",
+             y = "Count")
       
       ggplotly(p, tooltip = c("gender","text")) %>% 
         config(displayModeBar = FALSE)
       
     } else {
-      # For finish times, show the histogram with updated x-axis breaks
-      if(input$gender == "M") {
-        p <- ggplot(filtered_wser_splits(), aes(x = time_hours, fill = gender)) +
-          geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
-          scale_fill_manual(values = c("M" = male_color), labels = c("M")) +
-          scale_x_continuous(breaks = seq(0, 30, by = 5)) +  # Add 5-hour breaks
-          theme_minimal() +
-          labs(title = "Distribution of Finish Times",
-               x = "Finish Time (hours)",
-               y = "Count") +
-          facet_wrap(~year)
-      } else {
-        p <- ggplot(filtered_wser_splits(), aes(x = time_hours, fill = gender)) +
-          geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
-          scale_x_continuous(breaks = seq(0, 30, by = 5)) +  # Add 5-hour breaks
-          theme_minimal() +
-          labs(title = "Distribution of Finish Times",
-               x = "Finish Time (hours)",
-               y = "Count") +
-          facet_wrap(~year)
-      }
+      # Get count data for histogram
+      count_data <- filtered_wser_splits() %>%
+        group_by(year) %>%
+        summarise(count = n()) %>%
+        pull(count)
+      
+      # Finish times histogram with consistent colors
+      p <- ggplot(filtered_wser_splits(), aes(x = time_hours, fill = gender)) +
+        geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
+        scale_fill_manual(values = gender_colors) +
+        scale_x_continuous(breaks = seq(0, 30, by = 5)) +
+        scale_y_continuous(breaks = get_breaks) +
+        theme_minimal() +
+        labs(title = "Distribution of Finish Times",
+             x = "Finish Time (hours)",
+             y = "Count") +
+        facet_wrap(~year)
       
       ggplotly(p) %>% config(displayModeBar = FALSE)
     }
   })
   
-  
-  # Update the finish_summary_table to handle DNF cases and include percentages
-  # The early part of the script remains unchanged until the finish_summary_table output definition
-  
+  # Summary data table with conditional display
   output$finish_summary_table <- renderDT({
     # First get the base dataset with total counts before applying result filter
     base_data <- wser_splits %>%
@@ -476,7 +474,10 @@ server <- function(input, output, session) {
       )
   })
   
-  # Checkpoint Analysis Plot
+  # Define colors for consistent gender representation at the start of server function
+  gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")  # Blue for men, Pink for women
+  
+  # Modified checkpoint plot code
   output$checkpoint_plot <- renderPlotly({
     start_checkpoint_col <- paste0(input$start_checkpoint, "_time")
     end_checkpoint_col <- paste0(input$end_checkpoint, "_time")
@@ -484,9 +485,7 @@ server <- function(input, output, session) {
     # Create a lookup map for checkpoint names
     checkpoint_names <- setNames(as.character(wser_cp_table$cp_display_name), wser_cp_table$cp_column)
     
-    male_color <- "#91E5E2"
-    
-    # Calculate the difference *before* plotting
+    # Calculate the difference before plotting
     plot_data <- filtered_wser_splits_checkpoint() %>%
       mutate(
         time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
@@ -495,14 +494,13 @@ server <- function(input, output, session) {
     
     p <- ggplot(plot_data) +
       geom_point(aes(x = age, 
-                     y = time_diff, # Use time_diff for plotting (numeric)
+                     y = time_diff,
                      color = gender,
                      text = paste0("gender: ", gender,
                                    "<br>age: ", age,
                                    "<br>", 
-                                   # checkpoint_names[input$end_checkpoint], " - ", checkpoint_names[input$start_checkpoint], ": ",
                                    checkpoint_names[input$start_checkpoint], " - ", checkpoint_names[input$end_checkpoint], ": ",
-                                   time_diff_hms)), # Use time_diff_hms for display
+                                   time_diff_hms)),
                  alpha = 0.6) +
       geom_smooth(aes(x = age, 
                       y = time_diff,
@@ -510,6 +508,8 @@ server <- function(input, output, session) {
                   method = "loess") +
       theme_minimal() +
       scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
+      # Always set both colors explicitly, regardless of filtering
+      scale_color_manual(values = gender_colors) +
       labs(title = paste("Time vs Age Between",
                          checkpoint_names[input$start_checkpoint],
                          "and",
@@ -517,13 +517,10 @@ server <- function(input, output, session) {
            x = "Age",
            y = "Time (hh:mm:ss)")
     
-    if (input$gender_checkpoint == "M") {
-      p <- p + scale_color_manual(values = c("M" = male_color))
-    }
-    
     plt <- ggplotly(p, tooltip = "text") %>% 
       config(displayModeBar = FALSE)
     
+    # Remove hover info from smooth lines
     for(i in seq_along(plt$x$data)) {
       if(plt$x$data[[i]]$type == "scatter" && plt$x$data[[i]]$mode == "lines") {
         plt$x$data[[i]]$hoverinfo <- "skip"
