@@ -302,6 +302,22 @@ server <- function(input, output, session) {
     # Define colors for consistent gender representation
     gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")
     
+    # Get the filtered data first
+    plot_data <- filtered_wser_splits()
+    
+    # Check if we have any data
+    if (nrow(plot_data) == 0) {
+      # Create an empty plot with a message
+      p <- ggplot() +
+        annotate("text", x = 0.5, y = 0.5, 
+                 label = "No data available for the selected filters",
+                 size = 6) +
+        theme_void() +
+        xlim(0, 1) + ylim(0, 1)
+      
+      return(ggplotly(p) %>% config(displayModeBar = FALSE))
+    }
+    
     # Function to determine appropriate breaks based on data range
     get_breaks <- function(x) {
       if (max(x) <= 10) {
@@ -315,12 +331,12 @@ server <- function(input, output, session) {
     
     if (input$result == "dnf") {
       # Get count data for DNF plot
-      count_data <- filtered_wser_splits() %>%
+      count_data <- plot_data %>%
         count(year, gender) %>%
         pull(n)
       
       # DNF plot with consistent colors
-      p <- ggplot(filtered_wser_splits()) +
+      p <- ggplot(plot_data) +
         geom_bar(aes(x = as.factor(year), 
                      fill = gender,
                      text = paste0("Count: ", stat(count))),
@@ -337,13 +353,13 @@ server <- function(input, output, session) {
       
     } else {
       # Get count data for histogram
-      count_data <- filtered_wser_splits() %>%
+      count_data <- plot_data %>%
         group_by(year) %>%
         summarise(count = n()) %>%
         pull(count)
       
       # Finish times histogram with consistent colors
-      p <- ggplot(filtered_wser_splits(), aes(x = time_hours, fill = gender)) +
+      p <- ggplot(plot_data, aes(x = time_hours, fill = gender)) +
         geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
         scale_fill_manual(values = gender_colors) +
         scale_x_continuous(breaks = seq(0, 30, by = 5)) +
