@@ -155,6 +155,8 @@ ui <- fluidPage(
 # Server logic
 server <- function(input, output, session) {
   
+  gender_colors <- c("M" = "#0BB8E7", "F" = "#FF6B88")  # Darker blue and pink
+  
   # Add output for course checkpoints table
   output$course_checkpoints_table <- renderDT({
     datatable(
@@ -300,7 +302,7 @@ server <- function(input, output, session) {
   # Finish Time Distribution Plot
   output$finish_dist_plot <- renderPlotly({
     # Define colors for consistent gender representation
-    gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")
+    # gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")
     
     # Get the filtered data first
     plot_data <- filtered_wser_splits()
@@ -491,7 +493,7 @@ server <- function(input, output, session) {
   })
   
   # Define colors for consistent gender representation at the start of server function
-  gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")  # Blue for men, Pink for women
+  # gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")  # Blue for men, Pink for women
   
   # Modified checkpoint plot code
   output$checkpoint_plot <- renderPlotly({
