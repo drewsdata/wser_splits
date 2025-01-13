@@ -128,15 +128,21 @@ ui <- fluidPage(
                              "Select End Checkpoint:",
                              choices = NULL
                  ),
+                 # Add white space
+                 tags$div(
+                   style = "height: 5vh;  /* 5% of viewport height */
+          width: 100%;"
+                 ),
                  # Add colored divider
                  tags$div(
                    style = "margin: 4px 0;  /* Add space above and below */
-                           border-bottom: 4px solid #87CEEB; 
-                           width: 100%;" 
+          border-bottom: 4px solid #87CEEB; 
+          width: 100%;" 
                  ),
                  # Course Checkpoints header with hyperlink
-                 tags$h4("Checkpoint distances  ",
-                         tags$a("(Check here for WSER offical aid stations)", 
+                 tags$h4("Checkpoint distances:", tags$br(),
+                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years."), #tags$br(),
+                         tags$a("Check here for WSER offical aid stations", 
                                 href = "https://www.wser.org/course/aid-stations/",
                                 target = "_blank",  # Opens in new tab
                                 style = "color: #4682B4; text-decoration: none;")  # Steel blue color, no underline
