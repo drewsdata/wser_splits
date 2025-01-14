@@ -8,9 +8,10 @@ library(janitor)
 library(here)
 
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
-  clean_names()
+  clean_names() %>% 
+  add_column(olympic_valley_time = as_hms(00:00:00), .after = "country")
 wser_cp_table <- read_csv(here("data","wser_cp_table.csv"))
-wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv"))
+wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv")) 
 
 # UI Definition
 ui <- fluidPage(
@@ -489,7 +490,8 @@ server <- function(input, output, session) {
     
     DT::datatable(
       summary_table,
-      options = list(paging = FALSE)
+      options = list(paging = FALSE,
+                     searching = FALSE)
     ) %>%
       formatPercentage(
         # Dynamically set columns to format as percentage based on which ones exist
@@ -622,7 +624,8 @@ server <- function(input, output, session) {
         select(-c(max_decimal_hours,max_seconds)) %>%
         arrange(year, gender),
       options = list(
-        paging = FALSE)
+        paging = FALSE,
+        searching = FALSE)
     )
   })
   
