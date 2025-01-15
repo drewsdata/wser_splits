@@ -384,8 +384,15 @@ server <- function(input, output, session) {
   })
   
   # Summary data table with conditional display
+  # Summary data table with conditional display
+  # Summary data table with conditional display
   output$finish_summary_table <- renderDT({
-    # First get the base dataset with total counts before applying result filter
+    # Calculate total entrants per year BEFORE any filtering
+    total_entrants <- wser_splits %>%
+      group_by(year) %>%
+      summarise(total_entrants = n())
+    
+    # Get the filtered dataset for display
     base_data <- wser_splits %>%
       mutate(
         time_hours = convert_to_hours(time),
@@ -407,12 +414,12 @@ server <- function(input, output, session) {
       base_data <- base_data %>% filter(gender == input$gender)
     }
     
-    # Calculate total counts for percentage denominators
-    total_counts <- base_data %>%
-      group_by(year) %>%
-      summarise(total_year = n())
-    
-    gender_counts <- base_data %>%
+    # Calculate gender-specific totals BEFORE age filtering
+    gender_counts <- wser_splits %>%
+      filter(
+        year >= input$year_range[1],
+        year <= input$year_range[2]
+      ) %>%
       group_by(year, gender) %>%
       summarise(total_gender_year = n())
     
@@ -424,23 +431,23 @@ server <- function(input, output, session) {
           dnf_count = n()
         ) %>%
         # Join with total counts
-        left_join(total_counts, by = "year") %>%
+        left_join(total_entrants, by = "year") %>%
         left_join(gender_counts, by = c("year", "gender")) %>%
         # Calculate percentages
         mutate(
-          percent_all = round(dnf_count / total_year, 4),
-          percent_gender = round(dnf_count / total_gender_year, 4)
+          percent_all_entrants = round(dnf_count / total_entrants, 4),
+          percent_gender_entrants = round(dnf_count / total_gender_year, 4)
         ) %>%
         # Remove helper columns
-        select(-c(total_year, total_gender_year))
+        select(-c(total_entrants, total_gender_year))
       
       # Conditionally remove percentage columns based on gender selection
       if (input$gender == "All") {
         summary_table <- summary_table %>%
-          select(-percent_gender)
+          select(-percent_gender_entrants)
       } else {
         summary_table <- summary_table %>%
-          select(-percent_all)
+          select(-percent_all_entrants)
       }
       
       summary_table <- summary_table %>%
@@ -463,25 +470,20 @@ server <- function(input, output, session) {
           median_time = as_hms(round(median(time_hours, na.rm = TRUE) * 3600, 0)),
           min_time = as_hms(round(min(time_hours, na.rm = TRUE) * 3600, 0)),
           max_time = as_hms(round(max(time_hours, na.rm = TRUE) * 3600, 0))
-        ) %>%
-        # Join with total counts
-        left_join(total_counts, by = "year") %>%
-        left_join(gender_counts, by = c("year", "gender")) %>%
-        # Calculate percentages
-        mutate(
-          percent_all = round(finishers / total_year, 4),
-          percent_gender = round(finishers / total_gender_year, 4)
-        ) %>%
-        # Remove helper columns
-        select(-c(total_year, total_gender_year))
+        )
       
-      # Conditionally remove percentage columns based on gender selection
       if (input$gender == "All") {
+        # Join with total_entrants for percent_all_entrants calculation
         summary_table <- summary_table %>%
-          select(-percent_gender)
+          left_join(total_entrants, by = "year") %>%
+          mutate(percent_all_entrants = round(finishers / total_entrants, 4)) %>%
+          select(-total_entrants)
       } else {
+        # Join with gender_counts for percent_gender_entrants calculation
         summary_table <- summary_table %>%
-          select(-percent_all)
+          left_join(gender_counts, by = c("year", "gender")) %>%
+          mutate(percent_gender_entrants = round(finishers / total_gender_year, 4)) %>%
+          select(-total_gender_year)
       }
       
       summary_table <- summary_table %>%
@@ -495,8 +497,8 @@ server <- function(input, output, session) {
     ) %>%
       formatPercentage(
         # Dynamically set columns to format as percentage based on which ones exist
-        names(summary_table)[names(summary_table) %in% c("percent_all", "percent_gender")],
-        digits = 0
+        names(summary_table)[names(summary_table) %in% c("percent_all_entrants", "percent_gender_entrants")],
+        digits = 1
       )
   })
   
