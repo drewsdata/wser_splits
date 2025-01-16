@@ -308,8 +308,8 @@ server <- function(input, output, session) {
   
   # Finish Time Distribution Plot
   output$finish_dist_plot <- renderPlotly({
-    # Define colors for consistent gender representation
-    # gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")
+    # Define colors including a new one for "All"
+    gender_colors <- c("M" = "#0BB8E7", "F" = "#FF6B88", "All" = "#8B8B8B")  # Added gray for "All"
     
     # Get the filtered data first
     plot_data <- filtered_wser_splits()
@@ -330,61 +330,158 @@ server <- function(input, output, session) {
     # Function to determine appropriate breaks based on data range
     get_breaks <- function(x) {
       if (max(x) <= 10) {
-        # For small counts, use integers from 0 to max
         return(seq(0, ceiling(max(x)), by = 1))
       } else {
-        # For larger counts, use pretty breaks
         return(pretty(c(0, max(x)), n = 8))
       }
     }
     
     if (input$result == "dnf") {
-      # Get count data for DNF plot
-      count_data <- plot_data %>%
-        count(year, gender) %>%
-        pull(n)
-      
-      # DNF plot with consistent colors
-      p <- ggplot(plot_data) +
-        geom_bar(aes(x = as.factor(year), 
-                     fill = gender,
-                     text = paste0("Count: ", stat(count))),
-                 position = "dodge") +
-        scale_fill_manual(values = gender_colors) +
-        scale_y_continuous(breaks = get_breaks) +
-        theme_minimal() +
-        labs(title = "DNFs by Year",
-             x = "Year",
-             y = "Count")
-      
-      ggplotly(p, tooltip = c("gender","text")) %>% 
-        config(displayModeBar = FALSE)
-      
+      if (input$gender != "All") {
+        # Filter data for single gender
+        plot_data <- plot_data %>% filter(gender == input$gender)
+        
+        # DNF plot for single gender
+        p <- ggplot(plot_data) +
+          geom_bar(aes(x = as.factor(year), 
+                       fill = gender,
+                       color = gender),
+                   position = "dodge",
+                   alpha = 0.3,
+                   size = 0.5) +
+          scale_fill_manual(values = gender_colors) +
+          scale_color_manual(values = gender_colors) +
+          scale_y_continuous(breaks = get_breaks) +
+          theme_minimal() +
+          labs(title = "DNFs by Year",
+               x = "Year",
+               y = "Count")
+        
+        # Convert to plotly and add custom tooltip
+        plt <- ggplotly(p, tooltip = "y") %>% 
+          config(displayModeBar = FALSE)
+        
+        # Update tooltip text
+        for(i in seq_along(plt$x$data)) {
+          plt$x$data[[i]]$text <- paste0("Count: ", plt$x$data[[i]]$y)
+        }
+        
+        return(plt)
+        
+      } else {
+        # Create combined data for "All" category
+        all_data <- plot_data %>%
+          mutate(gender = "All")
+        
+        # Combine original and "All" data
+        combined_data <- bind_rows(plot_data, all_data)
+        
+        # DNF plot with both individual genders and "All"
+        p <- ggplot(combined_data) +
+          geom_bar(aes(x = as.factor(year), 
+                       fill = gender,
+                       color = gender),
+                   position = "dodge",
+                   alpha = 0.3,
+                   size = 0.5) +
+          scale_fill_manual(values = gender_colors) +
+          scale_color_manual(values = gender_colors) +
+          scale_y_continuous(breaks = get_breaks) +
+          theme_minimal() +
+          labs(title = "DNFs by Year",
+               x = "Year",
+               y = "Count")
+        
+        # Convert to plotly and add custom tooltip
+        plt <- ggplotly(p, tooltip = c("gender", "y")) %>% 
+          config(displayModeBar = FALSE)
+        
+        # Update tooltip text
+        for(i in seq_along(plt$x$data)) {
+          plt$x$data[[i]]$text <- paste0("Gender: ", plt$x$data[[i]]$name, "<br>",
+                                         "Count: ", plt$x$data[[i]]$y)
+        }
+        
+        return(plt)
+      }
     } else {
-      # Get count data for histogram
-      count_data <- plot_data %>%
-        group_by(year) %>%
-        summarise(count = n()) %>%
-        pull(count)
-      
-      # Finish times histogram with consistent colors
-      p <- ggplot(plot_data, aes(x = time_hours, fill = gender)) +
-        geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
-        scale_fill_manual(values = gender_colors) +
-        scale_x_continuous(breaks = seq(0, 30, by = 5)) +
-        scale_y_continuous(breaks = get_breaks) +
-        theme_minimal() +
-        labs(title = "Distribution of Finish Times",
-             x = "Finish Time (hours)",
-             y = "Count") +
-        facet_wrap(~year)
-      
-      ggplotly(p) %>% config(displayModeBar = FALSE)
+      if (input$gender != "All") {
+        # Filter data for single gender
+        plot_data <- plot_data %>% filter(gender == input$gender)
+        
+        # Finish times histogram for single gender
+        p <- ggplot(plot_data) +
+          geom_histogram(aes(x = time_hours,
+                             fill = gender,
+                             color = gender),
+                         alpha = 0.3,
+                         size = 0.5,
+                         bins = 30) +
+          scale_fill_manual(values = gender_colors) +
+          scale_color_manual(values = gender_colors) +
+          scale_x_continuous(breaks = seq(0, 30, by = 5)) +
+          scale_y_continuous(breaks = get_breaks) +
+          theme_minimal() +
+          labs(title = "Distribution of Finish Times",
+               x = "Finish Time (hours)",
+               y = "Count") +
+          facet_wrap(~year)
+        
+        # Convert to plotly and add custom tooltip
+        plt <- ggplotly(p) %>% 
+          config(displayModeBar = FALSE)
+        
+        # Update tooltip text
+        for(i in seq_along(plt$x$data)) {
+          plt$x$data[[i]]$text <- paste0("Finish Time: ", round(plt$x$data[[i]]$x, 1), " hours<br>",
+                                         "Count: ", plt$x$data[[i]]$y)
+        }
+        
+        return(plt)
+        
+      } else {
+        # Create combined data for "All" category
+        all_data <- plot_data %>%
+          mutate(gender = "All")
+        
+        # Combine original and "All" data
+        combined_data <- bind_rows(plot_data, all_data)
+        
+        # Finish times histogram with both individual genders and "All"
+        p <- ggplot(combined_data) +
+          geom_histogram(aes(x = time_hours,
+                             fill = gender,
+                             color = gender),
+                         alpha = 0.3,
+                         size = 0.5,
+                         bins = 30,
+                         position = "identity") +  # Add this line
+          scale_fill_manual(values = gender_colors) +
+          scale_color_manual(values = gender_colors) +
+          scale_x_continuous(breaks = seq(0, 30, by = 5)) +
+          scale_y_continuous(breaks = get_breaks) +
+          theme_minimal() +
+          labs(title = "Distribution of Finish Times",
+               x = "Finish Time (hours)",
+               y = "Count") +
+          facet_wrap(~year)
+        
+        # Convert to plotly and add custom tooltip
+        plt <- ggplotly(p) %>% 
+          config(displayModeBar = FALSE)
+        
+        # Update tooltip text
+        for(i in seq_along(plt$x$data)) {
+          plt$x$data[[i]]$text <- paste0("Gender: ", plt$x$data[[i]]$name, "<br>",
+                                         "Finish Time: ", round(plt$x$data[[i]]$x, 1), " hours<br>",
+                                         "Count: ", plt$x$data[[i]]$y)
+        }
+        
+        return(plt)
+      }
     }
   })
   
-  # Summary data table with conditional display
-  # Summary data table with conditional display
   # Summary data table with conditional display
   output$finish_summary_table <- renderDT({
     # Calculate total entrants per year BEFORE any filtering
@@ -410,6 +507,7 @@ server <- function(input, output, session) {
         age <= input$age_range[2]
       )
     
+    # Apply gender filter
     if (input$gender != "All") {
       base_data <- base_data %>% filter(gender == input$gender)
     }
@@ -419,7 +517,13 @@ server <- function(input, output, session) {
       filter(
         year >= input$year_range[1],
         year <= input$year_range[2]
-      ) %>%
+      )
+    
+    if (input$gender != "All") {
+      gender_counts <- gender_counts %>% filter(gender == input$gender)
+    }
+    
+    gender_counts <- gender_counts %>%
       group_by(year, gender) %>%
       summarise(total_gender_year = n())
     
@@ -441,6 +545,19 @@ server <- function(input, output, session) {
         # Remove helper columns
         select(-c(total_entrants, total_gender_year))
       
+      # Add "All" gender group only when "All" is selected
+      if (input$gender == "All") {
+        all_gender_summary <- summary_table %>%
+          group_by(year) %>%
+          summarise(
+            gender = "All",
+            dnf_count = sum(dnf_count),
+            percent_all_entrants = sum(percent_all_entrants)
+          )
+        
+        summary_table <- bind_rows(summary_table, all_gender_summary)
+      }
+      
       # Conditionally remove percentage columns based on gender selection
       if (input$gender == "All") {
         summary_table <- summary_table %>%
@@ -449,9 +566,6 @@ server <- function(input, output, session) {
         summary_table <- summary_table %>%
           select(-percent_all_entrants)
       }
-      
-      summary_table <- summary_table %>%
-        arrange(year, gender)
       
     } else {
       filtered_data <- base_data %>%
@@ -472,6 +586,22 @@ server <- function(input, output, session) {
           max_time = as_hms(round(max(time_hours, na.rm = TRUE) * 3600, 0))
         )
       
+      # Add "All" gender group only when "All" is selected
+      if (input$gender == "All") {
+        all_gender_summary <- filtered_data %>%
+          group_by(year) %>%
+          summarise(
+            gender = "All",
+            finishers = n(),
+            avg_time = as_hms(round(mean(time_hours, na.rm = TRUE) * 3600, 0)),
+            median_time = as_hms(round(median(time_hours, na.rm = TRUE) * 3600, 0)),
+            min_time = as_hms(round(min(time_hours, na.rm = TRUE) * 3600, 0)),
+            max_time = as_hms(round(max(time_hours, na.rm = TRUE) * 3600, 0))
+          )
+        
+        summary_table <- bind_rows(summary_table, all_gender_summary)
+      }
+      
       if (input$gender == "All") {
         # Join with total_entrants for percent_all_entrants calculation
         summary_table <- summary_table %>%
@@ -485,10 +615,10 @@ server <- function(input, output, session) {
           mutate(percent_gender_entrants = round(finishers / total_gender_year, 4)) %>%
           select(-total_gender_year)
       }
-      
-      summary_table <- summary_table %>%
-        arrange(year, gender)
     }
+    
+    summary_table <- summary_table %>%
+      arrange(year, desc(gender))  # Put "All" first, then alphabetically
     
     DT::datatable(
       summary_table,
@@ -496,7 +626,6 @@ server <- function(input, output, session) {
                      searching = FALSE)
     ) %>%
       formatPercentage(
-        # Dynamically set columns to format as percentage based on which ones exist
         names(summary_table)[names(summary_table) %in% c("percent_all_entrants", "percent_gender_entrants")],
         digits = 1
       )

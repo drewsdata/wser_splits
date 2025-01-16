@@ -307,7 +307,6 @@ server <- function(input, output, session) {
   })
   
   # Finish Time Distribution Plot
-  # Modify the Finish Time Distribution Plot
   output$finish_dist_plot <- renderPlotly({
     # Define colors including a new one for "All"
     gender_colors <- c("M" = "#0BB8E7", "F" = "#FF6B88", "All" = "#8B8B8B")  # Added gray for "All"
