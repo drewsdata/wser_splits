@@ -16,8 +16,9 @@ html_content <- readLines(here("data","wser_splitproject.html"))
 
 # UI Definition
 ui <- fluidPage(
-  
-  titlePanel("WSER 100 Results Analysis"),
+  h1("WSER 100 Results Analysis", align = "center"),
+  tags$hr(style="border-color: #4682B4;"),
+ # titlePanel("WSER 100 Results Analysis"),
   
   tabsetPanel(
     # Finish Time Distribution Tab
@@ -64,8 +65,39 @@ ui <- fluidPage(
                              "Age Range:",
                              min = min(wser_splits$age, na.rm = TRUE),
                              max = max(wser_splits$age, na.rm = TRUE),
-                             value = c(min(wser_splits$age, na.rm = TRUE), max(wser_splits$age, na.rm = TRUE)))
+                             value = c(min(wser_splits$age, na.rm = TRUE), max(wser_splits$age, na.rm = TRUE))),
+                 # Add white space
+                 tags$div(
+                   style = "height: 5vh;  /* 5% of viewport height */
+                   width: 100%;"
+                 ),
+                 
+                 # Add colored divider
+                 tags$div(
+                   style = "margin: 4px 0;  /* Add space above and below */
+                   border-bottom: 4px solid #87CEEB; 
+                   width: 100%;"
+                 ),
+                 
+                 # Add the time.txt content
+                 tags$div(
+                   style = "margin-top: 20px;",
+                   tags$p(
+                     "As the machine learning folks might say these days, \"Race outcome dependency variables represent a high dimensional space\". This is a fancy way of saying that the factors that influence how an ultramarathon turns out are numerous and interconnected. A \"high dimensional space\" is a mathematical concept where multiple variables interact simultaneously - imagine trying to plot dozens of points that each have many coordinates, not just x, y, and z. In ultrarunning, these \"dependency variables\" might include:"
+                   ),
+                   tags$ul(
+                     tags$li("Physical factors: training volume, nutrition, hydration, sleep quality"),
+                     tags$li("Environmental conditions: temperature, humidity, altitude, terrain"),
+                     tags$li("Mental states: confidence, stress levels, motivation"),
+                     tags$li("Race-specific elements: pacing strategy, gear choices, crew support"),
+                     tags$li("Life context: work-life balance, family support, overall stress levels")
+                   ),
+                   tags$p(
+                     "Fixating on just one or two variables (like finish time or placing) creates a narrow, potentially unsatisfying experience. In other words, enjoy the process and the outcome regardless of your time. Time is not a fundamental entity, but rather an emergent property arising from interactions between things, and our perception of time as a linear flow is an illusion created by the complexity of these interactions; essentially, \"time is the story we tell ourselves about the world.\". Time is not a container that things exist within, but rather a measure of how things relate to each other through interactions and changes. Despite its fleeting nature, time is a source of meaning and allows us to experience the richness of life."
+                   )
+                 )
                ),
+               
                mainPanel(
                  plotlyOutput("finish_dist_plot"),
                  DTOutput("finish_summary_table")
