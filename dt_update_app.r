@@ -12,6 +12,7 @@ wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>%
   add_column(olympic_valley_time = as_hms(00:00:00), .after = "country")
 wser_cp_table <- read_csv(here("data","wser_cp_table.csv"))
 wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv")) 
+html_content <- readLines(here("data","wser_splitproject.html"))
 
 # UI Definition
 ui <- fluidPage(
@@ -154,6 +155,11 @@ ui <- fluidPage(
                  plotlyOutput("checkpoint_plot"),
                  DTOutput("checkpoint_summary_table")
                )
+             )
+    ),
+    tabPanel("About",
+             mainPanel(
+               htmlOutput("about_content")
              )
     )
   )
@@ -525,7 +531,7 @@ server <- function(input, output, session) {
     
     gender_counts <- gender_counts %>%
       group_by(year, gender) %>%
-      summarise(total_gender_year = n())
+      summarise(total_gender = n())
     
     if (input$result == "dnf") {
       summary_table <- base_data %>%
@@ -539,11 +545,11 @@ server <- function(input, output, session) {
         left_join(gender_counts, by = c("year", "gender")) %>%
         # Calculate percentages
         mutate(
-          percent_all_entrants = round(dnf_count / total_entrants, 4),
-          percent_gender_entrants = round(dnf_count / total_gender_year, 4)
+          percent_all = round(dnf_count / total_entrants, 4),
+          percent_gender = round(dnf_count / total_gender, 4)
         ) %>%
         # Remove helper columns
-        select(-c(total_entrants, total_gender_year))
+        select(-c(total_entrants, total_gender))
       
       # Add "All" gender group only when "All" is selected
       if (input$gender == "All") {
@@ -552,7 +558,7 @@ server <- function(input, output, session) {
           summarise(
             gender = "All",
             dnf_count = sum(dnf_count),
-            percent_all_entrants = sum(percent_all_entrants)
+            percent_all = sum(percent_all)
           )
         
         summary_table <- bind_rows(summary_table, all_gender_summary)
@@ -561,10 +567,10 @@ server <- function(input, output, session) {
       # Conditionally remove percentage columns based on gender selection
       if (input$gender == "All") {
         summary_table <- summary_table %>%
-          select(-percent_gender_entrants)
+          select(-percent_gender)
       } else {
         summary_table <- summary_table %>%
-          select(-percent_all_entrants)
+          select(-percent_all)
       }
       
     } else {
@@ -603,19 +609,19 @@ server <- function(input, output, session) {
       }
       
       if (input$gender == "All") {
-        # Join with total_entrants for percent_all_entrants calculation
+        # Join with total_entrants for percent_all calculation
         summary_table <- summary_table %>%
           left_join(total_entrants, by = "year") %>%
-          mutate(percent_all_entrants = round(finishers / total_entrants, 4)) %>%
+          mutate(percent_all = round(finishers / total_entrants, 4)) %>%
          # select(-total_entrants) 
         relocate(finishers, .before = total_entrants)
       } else {
-        # Join with gender_counts for percent_gender_entrants calculation
+        # Join with gender_counts for percent_gender calculation
         summary_table <- summary_table %>%
           left_join(gender_counts, by = c("year", "gender")) %>%
-          mutate(percent_gender_entrants = round(finishers / total_gender_year, 4)) %>%
-          relocate(finishers, .before = total_gender_year)
-         # select(-total_gender_year) #%>% 
+          mutate(percent_gender = round(finishers / total_gender, 4)) %>%
+          relocate(finishers, .before = total_gender)
+         # select(-total_gender) #%>% 
           # add total_gender
       }
     }
@@ -626,10 +632,12 @@ server <- function(input, output, session) {
     DT::datatable(
       summary_table,
       options = list(paging = FALSE,
-                     searching = FALSE)
+                     searching = FALSE,
+                     columnDefs = list(list(className = 'dt-center', targets="_all"))),
+      rownames = FALSE
     ) %>%
       formatPercentage(
-        names(summary_table)[names(summary_table) %in% c("percent_all_entrants", "percent_gender_entrants")],
+        names(summary_table)[names(summary_table) %in% c("percent_all", "percent_gender")],
         digits = 1
       )
   })
@@ -759,7 +767,24 @@ server <- function(input, output, session) {
         arrange(year, gender),
       options = list(
         paging = FALSE,
-        searching = FALSE)
+        searching = FALSE,
+        columnDefs = list(list(className = 'dt-center', targets="_all"))),
+        rownames = FALSE
+    )
+  })
+  
+  output$about_content <- renderUI({
+    
+    # Extract the body content
+    body_content <- paste(html_content, collapse = "\n")
+    body_start <- regexpr("<body[^>]*>", body_content) + attr(regexpr("<body[^>]*>", body_content), "match.length")
+    body_end <- regexpr("</body>", body_content) - 1
+    body_content <- substr(body_content, body_start, body_end)
+    
+    # Create a div with padding and return the HTML content
+    tags$div(
+      style = "padding: 20px;",
+      HTML(body_content)
     )
   })
   
