@@ -488,7 +488,7 @@ server <- function(input, output, session) {
     total_entrants <- wser_splits %>%
       group_by(year) %>%
       summarise(total_entrants = n())
-    
+
     # Get the filtered dataset for display
     base_data <- wser_splits %>%
       mutate(
@@ -607,13 +607,16 @@ server <- function(input, output, session) {
         summary_table <- summary_table %>%
           left_join(total_entrants, by = "year") %>%
           mutate(percent_all_entrants = round(finishers / total_entrants, 4)) %>%
-          select(-total_entrants)
+         # select(-total_entrants) 
+        relocate(finishers, .before = total_entrants)
       } else {
         # Join with gender_counts for percent_gender_entrants calculation
         summary_table <- summary_table %>%
           left_join(gender_counts, by = c("year", "gender")) %>%
           mutate(percent_gender_entrants = round(finishers / total_gender_year, 4)) %>%
-          select(-total_gender_year)
+          relocate(finishers, .before = total_gender_year)
+         # select(-total_gender_year) #%>% 
+          # add total_gender
       }
     }
     
