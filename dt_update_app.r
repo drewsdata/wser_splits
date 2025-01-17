@@ -18,7 +18,7 @@ html_content <- readLines(here("data","wser_splitproject.html"))
 ui <- fluidPage(
   h1("WSER 100 Results Analysis", align = "center"),
   tags$hr(style="border-color: #4682B4;"),
- # titlePanel("WSER 100 Results Analysis"),
+  # titlePanel("WSER 100 Results Analysis"),
   
   tabsetPanel(
     # Finish Time Distribution Tab
@@ -93,7 +93,7 @@ ui <- fluidPage(
                      tags$li("Life context: work-life balance, family support, overall stress levels")
                    ),
                    tags$p(
-                     "Fixating on just one or two variables (like finish time or placing) creates a narrow, potentially unsatisfying experience. In other words, enjoy the process and the outcome regardless of your time. Time is not a fundamental entity, but rather an emergent property arising from interactions between things, and our perception of time as a linear flow is an illusion created by the complexity of these interactions; essentially, \"time is the story we tell ourselves about the world.\". Time is not a container that things exist within, but rather a measure of how things relate to each other through interactions and changes. Despite its fleeting nature, time is a source of meaning and allows us to experience the richness of life."
+                     "Fixating on just one or two variables (like finish time or placing) creates a narrow, potentially unsatisfying experience. Enjoy the process and the outcome regardless of your time because time is not a fundamental entity, but rather an emergent property arising from interactions between things, and our perception of time as a linear flow is an illusion created by the complexity of these interactions; essentially, \"time is the story we tell ourselves about the world.\". Time is not a container that things exist within, but rather a measure of how things relate to each other through interactions and changes. Despite its fleeting nature, time is a source of meaning and allows us to experience the richness of life."
                    )
                  )
                ),
@@ -526,7 +526,7 @@ server <- function(input, output, session) {
     total_entrants <- wser_splits %>%
       group_by(year) %>%
       summarise(total_entrants = n())
-
+    
     # Get the filtered dataset for display
     base_data <- wser_splits %>%
       mutate(
@@ -645,16 +645,16 @@ server <- function(input, output, session) {
         summary_table <- summary_table %>%
           left_join(total_entrants, by = "year") %>%
           mutate(percent_all = round(finishers / total_entrants, 4)) %>%
-         # select(-total_entrants) 
-        relocate(finishers, .before = total_entrants)
+          # select(-total_entrants) 
+          relocate(finishers, .before = total_entrants)
       } else {
         # Join with gender_counts for percent_gender calculation
         summary_table <- summary_table %>%
           left_join(gender_counts, by = c("year", "gender")) %>%
           mutate(percent_gender = round(finishers / total_gender, 4)) %>%
           relocate(finishers, .before = total_gender)
-         # select(-total_gender) #%>% 
-          # add total_gender
+        # select(-total_gender) #%>% 
+        # add total_gender
       }
     }
     
@@ -801,7 +801,7 @@ server <- function(input, output, session) {
         paging = FALSE,
         searching = FALSE,
         columnDefs = list(list(className = 'dt-center', targets="_all"))),
-        rownames = FALSE
+      rownames = FALSE
     )
   })
   

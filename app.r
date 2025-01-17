@@ -93,7 +93,7 @@ ui <- fluidPage(
                      tags$li("Life context: work-life balance, family support, overall stress levels")
                    ),
                    tags$p(
-                     "Fixating on just one or two variables (like finish time or placing) creates a narrow, potentially unsatisfying experience. In other words, enjoy the process and the outcome regardless of your time. Time is not a fundamental entity, but rather an emergent property arising from interactions between things, and our perception of time as a linear flow is an illusion created by the complexity of these interactions; essentially, \"time is the story we tell ourselves about the world.\". Time is not a container that things exist within, but rather a measure of how things relate to each other through interactions and changes. Despite its fleeting nature, time is a source of meaning and allows us to experience the richness of life."
+                     "Fixating on just one or two variables (like finish time or placing) creates a narrow, potentially unsatisfying experience. Enjoy the process and the outcome regardless of your time because time is not a fundamental entity, but rather an emergent property arising from interactions between things, and our perception of time as a linear flow is an illusion created by the complexity of these interactions; essentially, \"time is the story we tell ourselves about the world.\". Time is not a container that things exist within, but rather a measure of how things relate to each other through interactions and changes. Despite its fleeting nature, time is a source of meaning and allows us to experience the richness of life."
                    )
                  )
                ),
