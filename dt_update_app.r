@@ -93,7 +93,13 @@ ui <- fluidPage(
                      tags$li("Life context: work-life balance, family support, overall stress levels")
                    ),
                    tags$p(
-                     "Given these complexities, fixating on outcome results like finish times or placing can create unsatisfying experiences. The rare opportunity to particpate in a special event like WSER may best be appreciated and remembered by enjoying the entire process and journey."
+                     "Given these complexities, fixating on outcome results like finish times or placing can create unsatisfying experiences. 
+                      The rare opportunity to particpate in a special event like the",
+                     tags$a("WSER", 
+                            href = "https://www.wser.org/",
+                            target = "_blank",
+                            style = "color: #4682B4; text-decoration: none;"),
+                     "may best be appreciated and remembered by enjoying the entire process and journey."
                    )
                  )
                ),
