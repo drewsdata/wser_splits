@@ -78,12 +78,12 @@ ui <- fluidPage(
                    border-bottom: 4px solid #87CEEB; 
                    width: 100%;"
                  ),
-                 
+                 tags$b("Time is the story we tell ourselves about the world:", tags$br()),
                  # Add the time.txt content
                  tags$div(
                    style = "margin-top: 20px;",
                    tags$p(
-                     "As the machine learning folks might say these days, \"Race outcome dependency variables represent a high dimensional space\". This is a fancy way of saying that the factors that influence how an ultramarathon turns out are numerous and interconnected. A \"high dimensional space\" is a mathematical concept where multiple variables interact simultaneously - imagine trying to plot dozens of points that each have many coordinates, not just x, y, and z. In ultrarunning, these \"dependency variables\" might include:"
+                     "As the machine learning folks might say these days, \"Race outcome dependency variables represent a high dimensional space\". This is a fancy way of saying that factors influencing ultramarathon results are numerous and interconnected. In ultrarunning, these factors might include:"
                    ),
                    tags$ul(
                      tags$li("Physical factors: training volume, nutrition, hydration, sleep quality"),
@@ -93,7 +93,7 @@ ui <- fluidPage(
                      tags$li("Life context: work-life balance, family support, overall stress levels")
                    ),
                    tags$p(
-                     "Fixating on just one or two variables (like finish time or placing) creates a narrow, potentially unsatisfying experience. Enjoy the process and the outcome regardless of your time because time is not a fundamental entity, but rather an emergent property arising from interactions between things, and our perception of time as a linear flow is an illusion created by the complexity of these interactions; essentially, \"time is the story we tell ourselves about the world.\". Time is not a container that things exist within, but rather a measure of how things relate to each other through interactions and changes. Despite its fleeting nature, time is a source of meaning and allows us to experience the richness of life."
+                     "Given these complexities, fixating on outcome results like finish times or placing can create unsatisfying experiences. The rare opportunity to particpate in a special event like WSER may best be appreciated and remembered by enjoying the entire process and journey."
                    )
                  )
                ),
