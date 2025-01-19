@@ -1,11 +1,15 @@
 # Load required libraries
 library(hms)
 library(shiny)
-library(tidyverse)
+library(tibble)
+library(lubridate)
+library(dplyr)
+library(readr)
 library(plotly)
 library(DT)
 library(janitor)
 library(here)
+# library(tidyverse)
 
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
   clean_names() %>% 
