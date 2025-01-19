@@ -195,6 +195,58 @@ ui <- fluidPage(
                )
              )
     ),
+    # All runners
+    tabPanel("Runner Data",
+             sidebarLayout(
+               sidebarPanel(
+                 # Year range selector
+                 tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"),
+                 sliderInput("year_range_data",
+                             "Select Years:",
+                             min = min(wser_splits$year),
+                             max = max(wser_splits$year),
+                             value = c(min(wser_splits$year), max(wser_splits$year)),
+                             step = 1,
+                             sep = ""),
+                 
+                 # Create a flex container for gender and result type
+                 div(style = "display: flex; gap: 20px;",
+                     # Gender selector
+                     div(style = "flex: 1;",
+                         radioButtons("gender_data",
+                                      "Select Gender:",
+                                      choices = list("All" = "All",
+                                                     "Female" = "F",
+                                                     "Male" = "M"),
+                                      selected = "All")
+                     ),
+                     # Result selector
+                     div(style = "flex: 1;",
+                         radioButtons("result_data",
+                                      "Select Result:",
+                                      choices = list(
+                                        "All finishes" = "all_finishes",
+                                        "Bronze Buckle (24 to 30 hours)" = "bronze",
+                                        "Silver Buckle (sub 24 hours)" = "silver",
+                                        "DNF" = "dnf"
+                                      ),
+                                      selected = "all_finishes")
+                     )
+                 ),
+                 
+                 # Age range selector
+                 sliderInput("age_range_data",
+                             "Age Range:",
+                             min = min(wser_splits$age, na.rm = TRUE),
+                             max = max(wser_splits$age, na.rm = TRUE),
+                             value = c(min(wser_splits$age, na.rm = TRUE), max(wser_splits$age, na.rm = TRUE)))
+               ),
+               
+               mainPanel(
+                 DTOutput("runner_data_table")
+               )
+             )
+    ),
     tabPanel("About",
              mainPanel(
                htmlOutput("about_content")
@@ -811,8 +863,53 @@ server <- function(input, output, session) {
     )
   })
   
-  output$about_content <- renderUI({
+  filtered_wser_splits_data <- reactive({
+    # Initial filtering without result type
+    df <- wser_splits %>%
+      mutate(
+        result_type = case_when(
+          time == "dnf" ~ "dnf",
+          !is.na(convert_to_hours(time)) & convert_to_hours(time) < 24 ~ "silver",
+          !is.na(convert_to_hours(time)) & convert_to_hours(time) >= 24 & convert_to_hours(time) <= 30 ~ "bronze",
+          TRUE ~ "other"
+        )
+      ) %>%
+      filter(year >= input$year_range_data[1],
+             year <= input$year_range_data[2],
+             age >= input$age_range_data[1],
+             age <= input$age_range_data[2])
     
+    # Apply gender filter
+    if (input$gender_data != "All") {
+      df <- df %>% filter(gender == input$gender_data)
+    }
+    
+    # Filter based on selected result
+    filtered_df <- switch(input$result_data,
+                          "all_finishes" = df %>% filter(result_type %in% c("silver", "bronze")),
+                          "silver" = df %>% filter(result_type == "silver"),
+                          "bronze" = df %>% filter(result_type == "bronze"),
+                          "dnf" = df %>% filter(result_type == "dnf"),
+                          df  # default case
+    )
+    
+    return(filtered_df)
+  })
+  
+  # All runners table
+  output$runner_data_table <- renderDT({
+    datatable(
+      filtered_wser_splits_data(),
+      options = list(
+        pageLength = 10,
+        dom = 'lftip',
+        searchable = FALSE,
+        columnDefs = list(list(className = 'dt-left', targets="_all"))),
+      rownames = FALSE,
+    )
+  })
+  
+  output$about_content <- renderUI({
     # Extract the body content
     body_content <- paste(html_content, collapse = "\n")
     body_start <- regexpr("<body[^>]*>", body_content) + attr(regexpr("<body[^>]*>", body_content), "match.length")
