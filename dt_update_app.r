@@ -585,9 +585,9 @@ server <- function(input, output, session) {
   # Summary data table with conditional display
   output$finish_summary_table <- renderDT({
     # Calculate total entrants per year BEFORE any filtering
-    total_entrants <- wser_splits %>%
+    all_entrants <- wser_splits %>%
       group_by(year) %>%
-      summarise(total_entrants = n())
+      summarise(all_entrants = n())
     
     # Get the filtered dataset for display
     base_data <- wser_splits %>%
@@ -625,7 +625,7 @@ server <- function(input, output, session) {
     
     gender_counts <- gender_counts %>%
       group_by(year, gender) %>%
-      summarise(total_gender = n())
+      summarise(all_gender = n())
     
     if (input$result == "dnf") {
       summary_table <- base_data %>%
@@ -635,15 +635,15 @@ server <- function(input, output, session) {
           dnf_count = n()
         ) %>%
         # Join with total counts
-        left_join(total_entrants, by = "year") %>%
+        left_join(all_entrants, by = "year") %>%
         left_join(gender_counts, by = c("year", "gender")) %>%
         # Calculate percentages
         mutate(
-          percent_all = round(dnf_count / total_entrants, 4),
-          percent_gender = round(dnf_count / total_gender, 4)
+          percent_all = round(dnf_count / all_entrants, 4),
+          percent_gender = round(dnf_count / all_gender, 4)
         ) %>%
         # Remove helper columns
-        select(-c(total_entrants, total_gender))
+        select(-c(all_entrants, all_gender))
       
       # Add "All" gender group only when "All" is selected
       if (input$gender == "All") {
@@ -703,20 +703,20 @@ server <- function(input, output, session) {
       }
       
       if (input$gender == "All") {
-        # Join with total_entrants for percent_all calculation
+        # Join with all_entrants for percent_all calculation
         summary_table <- summary_table %>%
-          left_join(total_entrants, by = "year") %>%
-          mutate(percent_all = round(finishers / total_entrants, 4)) %>%
-          # select(-total_entrants) 
-          relocate(finishers, .before = total_entrants)
+          left_join(all_entrants, by = "year") %>%
+          mutate(percent_all = round(finishers / all_entrants, 4)) %>%
+          # select(-all_entrants) 
+          relocate(finishers, .before = all_entrants)
       } else {
         # Join with gender_counts for percent_gender calculation
         summary_table <- summary_table %>%
           left_join(gender_counts, by = c("year", "gender")) %>%
-          mutate(percent_gender = round(finishers / total_gender, 4)) %>%
-          relocate(finishers, .before = total_gender)
-        # select(-total_gender) #%>% 
-        # add total_gender
+          mutate(percent_gender = round(finishers / all_gender, 4)) %>%
+          relocate(finishers, .before = all_gender)
+        # select(-all_gender) #%>% 
+        # add all_gender
       }
     }
     
