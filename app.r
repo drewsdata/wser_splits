@@ -251,11 +251,25 @@ ui <- fluidPage(
                )
              )
     ),
+    tags$head(
+      tags$style(HTML("
+      .shiny-image-output img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+    "))
+    ),
+    
+    tabPanel("Distribution Plot",
+             imageOutput("yearly_distribution") # This is a reference to a server code
+    ),
     tabPanel("About",
              mainPanel(
                htmlOutput("about_content")
              )
     )
+    
   )
 )
 
@@ -926,6 +940,12 @@ server <- function(input, output, session) {
       HTML(body_content)
     )
   })
+  
+  output$yearly_distribution <- renderImage({
+    # List containing the filename
+    list(src = here("plots","year_ridge_plot.png"),
+         contentType = 'image/png')
+  }, deleteFile = FALSE)
   
 }
 
