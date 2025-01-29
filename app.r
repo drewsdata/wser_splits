@@ -26,7 +26,7 @@ ui <- fluidPage(
   
   tabsetPanel(
     # Finish Time Distribution Tab
-    tabPanel("Finish Time Distribution",
+    tabPanel("Finish Time Analysis",
              sidebarLayout(
                sidebarPanel(
                  # Year range selector
