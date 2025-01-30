@@ -20,7 +20,7 @@ html_content <- readLines(here("data","wser_splitproject.html"))
 
 # UI Definition
 ui <- fluidPage(
-  h1("WSER 100 Results Analysis", align = "center"),
+  h1("WSER Timing Data Analysis", align = "center"),
   tags$hr(style="border-color: #4682B4;"),
   # titlePanel("WSER 100 Results Analysis"),
   
