@@ -251,6 +251,10 @@ ui <- fluidPage(
                )
              )
     ),
+
+    tabPanel("Distribution Plot",
+             imageOutput("yearly_distribution") # This is a reference to a server code
+    ),
     tags$head(
       tags$style(HTML("
       .shiny-image-output img {
@@ -261,9 +265,6 @@ ui <- fluidPage(
     "))
     ),
     
-    tabPanel("Distribution Plot",
-             imageOutput("yearly_distribution") # This is a reference to a server code
-    ),
     tabPanel("About",
              mainPanel(
                htmlOutput("about_content")
