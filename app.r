@@ -9,6 +9,7 @@ library(plotly)
 library(DT)
 library(janitor)
 library(here)
+library(shinycssloaders)
 # library(tidyverse)
 
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
@@ -109,9 +110,9 @@ ui <- fluidPage(
                ),
                
                mainPanel(
-                 plotlyOutput("finish_dist_plot"),
+                 plotlyOutput("finish_dist_plot") %>% withSpinner(),
                  DTOutput("finish_summary_table")
-               )
+               ) 
              )
     ),
     
@@ -194,7 +195,7 @@ ui <- fluidPage(
                  DTOutput("course_checkpoints_table")
                ),
                mainPanel(
-                 plotlyOutput("checkpoint_plot"),
+                 plotlyOutput("checkpoint_plot")  %>% withSpinner(),
                  DTOutput("checkpoint_summary_table")
                )
              )
@@ -251,7 +252,7 @@ ui <- fluidPage(
                )
              )
     ),
-
+    
     tabPanel("Distribution Plot",
              imageOutput("yearly_distribution") # This is a reference to a server code
     ),
