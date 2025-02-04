@@ -10,8 +10,8 @@ library(DT)
 library(janitor)
 library(here)
 library(shinycssloaders)
-# library(tidyverse)
 
+# Load clean data sets
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
   clean_names() %>% 
   add_column(olympic_valley_time = as_hms(00:00:00), .after = "country")
@@ -23,7 +23,6 @@ html_content <- readLines(here("data","wser_splitproject.html"))
 ui <- fluidPage(
   h1("WSER Timing Data Analysis", align = "center"),
   tags$hr(style="border-color: #4682B4;"),
-  # titlePanel("WSER 100 Results Analysis"),
   
   tabsetPanel(
     # Finish Time Distribution Tab
@@ -40,7 +39,7 @@ ui <- fluidPage(
                              step = 1,
                              sep = ""),
                  
-                 # Create a flex container for gender and result type
+                 # Flex container for gender and result type
                  div(style = "display: flex; gap: 20px;",
                      # Gender selector
                      div(style = "flex: 1;",
@@ -51,7 +50,7 @@ ui <- fluidPage(
                                                      "Male" = "M"),
                                       selected = "All")
                      ),
-                     # Result selector (replaced buckle type)
+                     # Result selector 
                      div(style = "flex: 1;",
                          radioButtons("result",
                                       "Select Result:",
@@ -84,7 +83,7 @@ ui <- fluidPage(
                    width: 100%;"
                  ),
                  tags$b("Time is the story we tell ourselves about the world:", tags$br()),
-                 # Add the time.txt content
+                 # Add time and perspective reference
                  tags$div(
                    style = "margin-top: 20px;",
                    tags$p(
@@ -120,7 +119,7 @@ ui <- fluidPage(
     tabPanel("Checkpoint Analysis",
              sidebarLayout(
                sidebarPanel(
-                 # Year range selector (unchanged)
+                 # Year range selector
                  tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"),
                  sliderInput("year_range_checkpoint",
                              "Select Years:",
@@ -130,7 +129,7 @@ ui <- fluidPage(
                              step = 1,
                              sep = ""),
                  
-                 # Create a flex container for gender and result type
+                 # Flex container for gender and result type
                  div(style = "display: flex; gap: 20px;",
                      # Gender selector
                      div(style = "flex: 1;",
@@ -184,7 +183,7 @@ ui <- fluidPage(
           border-bottom: 4px solid #87CEEB; 
           width: 100%;" 
                  ),
-                 # Course Checkpoints header with hyperlink
+                 # Course Checkpoints header with external WSER ref
                  tags$h4("Checkpoint distances:", tags$br(),
                          tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years."), #tags$br(),
                          tags$a("Check here for WSER offical aid stations", 
@@ -254,7 +253,7 @@ ui <- fluidPage(
     ),
     
     tabPanel("Distribution Plot",
-             imageOutput("yearly_distribution") # This is a reference to a server code
+             imageOutput("yearly_distribution") 
     ),
     tags$head(
       tags$style(HTML("
@@ -278,7 +277,7 @@ ui <- fluidPage(
 # Server logic
 server <- function(input, output, session) {
   
-  gender_colors <- c("M" = "#0BB8E7", "F" = "#FF6B88")  # Darker blue and pink
+  gender_colors <- c("M" = "#0BB8E7", "F" = "#FF6B88")
   
   # Add output for course checkpoints table
   output$course_checkpoints_table <- renderDT({
@@ -392,7 +391,7 @@ server <- function(input, output, session) {
     return(filtered_df)
   })
   
-  # Reactive filtered dataset for Position Changes
+  # Reactive filtered dataset for position changes
   filtered_wser_splits_position <- reactive({
     wser_splits %>%
       mutate(
@@ -571,7 +570,7 @@ server <- function(input, output, session) {
                          alpha = 0.3,
                          size = 0.5,
                          bins = 30,
-                         position = "identity") +  # Add this line
+                         position = "identity") + 
           scale_fill_manual(values = gender_colors) +
           scale_color_manual(values = gender_colors) +
           scale_x_continuous(breaks = seq(0, 30, by = 5)) +
@@ -723,7 +722,6 @@ server <- function(input, output, session) {
         summary_table <- summary_table %>%
           left_join(all_entrants, by = "year") %>%
           mutate(percent_all = round(finishers / all_entrants, 4)) %>%
-          # select(-all_entrants) 
           relocate(finishers, .before = all_entrants)
       } else {
         # Join with gender_counts for percent_gender calculation
@@ -731,8 +729,6 @@ server <- function(input, output, session) {
           left_join(gender_counts, by = c("year", "gender")) %>%
           mutate(percent_gender = round(finishers / all_gender, 4)) %>%
           relocate(finishers, .before = all_gender)
-        # select(-all_gender) #%>% 
-        # add all_gender
       }
     }
     
@@ -752,9 +748,6 @@ server <- function(input, output, session) {
       )
   })
   
-  # Define colors for consistent gender representation at the start of server function
-  # gender_colors <- c("M" = "#91E5E2", "F" = "#FFB6C6")  # Blue for men, Pink for women
-  
   # Modified checkpoint plot code
   output$checkpoint_plot <- renderPlotly({
     req(input$start_checkpoint, input$end_checkpoint)
@@ -771,7 +764,7 @@ server <- function(input, output, session) {
         time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
         time_diff_hms = as_hms(round(time_diff, 0)) # Time in HH:MM:SS format
       ) %>%
-      filter(!is.na(time_diff))  # Remove NA values
+      filter(!is.na(time_diff)) 
     
     # Check if we have any data
     if (nrow(plot_data) == 0) {
@@ -930,7 +923,7 @@ server <- function(input, output, session) {
   })
   
   output$about_content <- renderUI({
-    # Extract the body content
+    # Extract the body content from the 'About' html page
     body_content <- paste(html_content, collapse = "\n")
     body_start <- regexpr("<body[^>]*>", body_content) + attr(regexpr("<body[^>]*>", body_content), "match.length")
     body_end <- regexpr("</body>", body_content) - 1
