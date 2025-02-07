@@ -11,10 +11,7 @@ library(janitor)
 library(here)
 library(shinycssloaders)
 
-# Load clean data sets
-wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv")) %>% 
-  clean_names() %>% 
-  add_column(olympic_valley_time = as_hms(00:00:00), .after = "country")
+wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv"))
 wser_cp_table <- read_csv(here("data","wser_cp_table.csv"))
 wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv")) 
 html_content <- readLines(here("data","wser_splitproject.html"))
