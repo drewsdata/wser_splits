@@ -23,7 +23,7 @@ ui <- fluidPage(
   
   tabsetPanel(
     # Finish Time Distribution Tab
-    tabPanel("Finish Time Analysis",
+    tabPanel("Finishes",
              sidebarLayout(
                sidebarPanel(
                  # Year range selector
@@ -113,7 +113,7 @@ ui <- fluidPage(
     ),
     
     # Checkpoint Analysis Tab
-    tabPanel("Checkpoint Analysis",
+    tabPanel("Checkpoints",
              sidebarLayout(
                sidebarPanel(
                  # Year range selector
@@ -290,7 +290,7 @@ ui <- fluidPage(
              )
     ),
     # All runners
-    tabPanel("Runner Data",
+    tabPanel("Runners",
              sidebarLayout(
                sidebarPanel(
                  # Year range selector
@@ -342,7 +342,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("Distribution Plot",
+    tabPanel("Distribution",
              imageOutput("yearly_distribution")
     ),
     tags$head(
