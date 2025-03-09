@@ -13,7 +13,7 @@ library(shinycssloaders)
 
 wser_splits <- read_csv(here("data","wser_split_data_2017_2024.csv"))
 wser_cp_table <- read_csv(here("data","wser_cp_table.csv"))
-wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv")) 
+wser_course_checkpoints <- read_csv(here("data","wser_course_checkpoints.csv"))
 html_content <- readLines(here("data","wser_splitproject.html"))
 
 # UI Definition
@@ -47,7 +47,7 @@ ui <- fluidPage(
                                                      "Male" = "M"),
                                       selected = "All")
                      ),
-                     # Result selector 
+                     # Result selector
                      div(style = "flex: 1;",
                          radioButtons("result",
                                       "Select Result:",
@@ -76,7 +76,7 @@ ui <- fluidPage(
                  # Add colored divider
                  tags$div(
                    style = "margin: 4px 0;  /* Add space above and below */
-                   border-bottom: 4px solid #87CEEB; 
+                   border-bottom: 4px solid #87CEEB;
                    width: 100%;"
                  ),
                  tags$b("Time is the story we tell ourselves about the world:", tags$br()),
@@ -94,9 +94,9 @@ ui <- fluidPage(
                      tags$li("Life context: work-life balance, family support, overall stress levels")
                    ),
                    tags$p(
-                     "Given these complexities, fixating on outcome results like finish times or placing can create unsatisfying experiences. 
+                     "Given these complexities, fixating on outcome results like finish times or placing can create unsatisfying experiences.
                       The rare opportunity to particpate in a special event like the",
-                     tags$a("WSER", 
+                     tags$a("WSER",
                             href = "https://www.wser.org/",
                             target = "_blank",
                             style = "color: #4682B4; text-decoration: none;"),
@@ -108,7 +108,7 @@ ui <- fluidPage(
                mainPanel(
                  plotlyOutput("finish_dist_plot") %>% withSpinner(),
                  DTOutput("finish_summary_table")
-               ) 
+               )
              )
     ),
     
@@ -161,7 +161,7 @@ ui <- fluidPage(
                  # Checkpoint selectors
                  selectInput("start_checkpoint",
                              "Select Start Checkpoint:",
-                             choices = setNames(wser_cp_table$cp_column, 
+                             choices = setNames(wser_cp_table$cp_column,
                                                 wser_cp_table$cp_display_name)
                  ),
                  
@@ -177,13 +177,13 @@ ui <- fluidPage(
                  # Add colored divider
                  tags$div(
                    style = "margin: 4px 0;  /* Add space above and below */
-          border-bottom: 4px solid #87CEEB; 
-          width: 100%;" 
+          border-bottom: 4px solid #87CEEB;
+          width: 100%;"
                  ),
                  # Course Checkpoints header with external WSER ref
                  tags$h4("Checkpoint distances:", tags$br(),
                          tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years."), #tags$br(),
-                         tags$a("Check here for WSER offical aid stations", 
+                         tags$a("Check here for WSER offical aid stations",
                                 href = "https://www.wser.org/course/aid-stations/",
                                 target = "_blank",  # Opens in new tab
                                 style = "color: #4682B4; text-decoration: none;")  # Steel blue color, no underline
@@ -193,6 +193,99 @@ ui <- fluidPage(
                mainPanel(
                  plotlyOutput("checkpoint_plot")  %>% withSpinner(),
                  DTOutput("checkpoint_summary_table")
+               )
+             )
+    ),
+
+    # Splits Analysis Tab
+    tabPanel("Splits",
+             sidebarLayout(
+               sidebarPanel(
+                 # Year range selector
+                 tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"),
+                 sliderInput("year_range_splits",
+                             "Select Years:",
+                             min = min(wser_splits$year),
+                             max = max(wser_splits$year),
+                             value = c(min(wser_splits$year), max(wser_splits$year)),
+                             step = 1,
+                             sep = ""),
+                 
+                 # Flex container for gender and result type
+                 div(style = "display: flex; gap: 20px;",
+                     # Gender selector
+                     div(style = "flex: 1;",
+                         radioButtons("gender_splits",
+                                      "Select Gender:",
+                                      choices = list("All" = "All",
+                                                     "Female" = "F",
+                                                     "Male" = "M"),
+                                      selected = "All")
+                     ),
+                     # Result selector
+                     div(style = "flex: 1;",
+                         radioButtons("result_splits",
+                                      "Select Result:",
+                                      choices = list(
+                                        "All finishes" = "all_finishes",
+                                        "Bronze Buckle (24 to 30 hours)" = "bronze",
+                                        "Silver Buckle (sub 24 hours)" = "silver",
+                                        "DNF" = "dnf"
+                                      ),
+                                      selected = "all_finishes")
+                     )
+                 ),
+                 
+                 # Age range selector
+                 sliderInput("age_range_splits",
+                             "Age Range:",
+                             min = min(wser_splits$age, na.rm = TRUE),
+                             max = max(wser_splits$age, na.rm = TRUE),
+                             value = c(min(wser_splits$age, na.rm = TRUE), max(wser_splits$age, na.rm = TRUE))),
+                 
+                 # Checkpoint selectors
+                 selectInput("start_checkpoint_splits",
+                             "Select Start Checkpoint:",
+                             choices = setNames(wser_cp_table$cp_column,
+                                                wser_cp_table$cp_display_name)
+                 ),
+                 
+                 selectInput("end_checkpoint_splits",
+                             "Select End Checkpoint:",
+                             choices = NULL
+                 ),
+                 radioButtons("pace_type",
+                              "Select Pace Unit:",
+                              choices = list("mile" = "mins_per_mile",
+                                             "km" = "mins_per_km"),
+                              selected = "mins_per_mile", inline = TRUE
+                 ),
+                 # Add white space
+                 tags$div(
+                   style = "height: 5vh;  /* 5% of viewport height */
+          width: 100%;"
+                 ),
+                 # Add colored divider
+                 tags$div(
+                   style = "margin: 4px 0;  /* Add space above and below */
+          border-bottom: 4px solid #87CEEB;
+          width: 100%;"
+                 ),
+                 
+                 # Course Checkpoints header with external WSER ref
+                 tags$h4("Checkpoint distances:", tags$br(),
+                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years."), #tags$br(),
+                         tags$a("Check here for WSER offical aid stations",
+                                href = "https://www.wser.org/course/aid-stations/",
+                                target = "_blank",  # Opens in new tab
+                                style = "color: #4682B4; text-decoration: none;")  # Steel blue color, no underline
+                 ),
+                 DTOutput("course_checkpoints_table_splits")
+               ),
+               
+               mainPanel(
+                 plotlyOutput("splits_plot") %>% withSpinner(),
+                 DTOutput("splits_summary_table") %>% withSpinner()
                )
              )
     ),
@@ -250,7 +343,7 @@ ui <- fluidPage(
     ),
     
     tabPanel("Distribution Plot",
-             imageOutput("yearly_distribution") 
+             imageOutput("yearly_distribution")
     ),
     tags$head(
       tags$style(HTML("
@@ -278,6 +371,21 @@ server <- function(input, output, session) {
   
   # Add output for course checkpoints table
   output$course_checkpoints_table <- renderDT({
+    datatable(
+      wser_course_checkpoints,
+      options = list(
+        pageLength = 25,
+        #scrollY = "300px",
+        #scrollCollapse = TRUE,
+        dom = 't',  # Only show table, no search/pagination controls
+        ordering = FALSE
+      ),
+      rownames = FALSE
+    )
+  })
+  
+  # Add output for course checkpoints table
+  output$course_checkpoints_table_splits <- renderDT({
     datatable(
       wser_course_checkpoints,
       options = list(
@@ -388,6 +496,42 @@ server <- function(input, output, session) {
     return(filtered_df)
   })
   
+  # Reactive filtered dataset for splits analysis
+  filtered_wser_splits_splits <- reactive({
+    df <- wser_splits %>%
+      mutate(
+        time_hours = convert_to_hours(time),
+        across(ends_with("_time"), convert_to_hours),
+        result_type = case_when(
+          time == "dnf" ~ "dnf",
+          !is.na(convert_to_hours(time)) & convert_to_hours(time) < 24 ~ "silver",
+          !is.na(convert_to_hours(time)) & convert_to_hours(time) >= 24 & convert_to_hours(time) <= 30 ~ "bronze",
+          TRUE ~ "other"
+        )
+      ) %>%
+      filter(year >= input$year_range_splits[1],
+             year <= input$year_range_splits[2],
+             age >= input$age_range_splits[1],
+             age <= input$age_range_splits[2])
+    
+    # Apply gender filter
+    if (input$gender_splits != "All") {
+      df <- df %>% filter(gender == input$gender_splits)
+    }
+    
+    # Filter based on selected result
+    filtered_df <- switch(input$result_splits,
+                          "all_finishes" = df %>% filter(result_type %in% c("silver", "bronze")),
+                          "silver" = df %>% filter(result_type == "silver"),
+                          "bronze" = df %>% filter(result_type == "bronze"),
+                          "dnf" = df %>% filter(result_type == "dnf"),
+                          df  # default case
+    )
+    
+    return(filtered_df)
+  })
+  
+  
   # Reactive filtered dataset for position changes
   filtered_wser_splits_position <- reactive({
     wser_splits %>%
@@ -402,7 +546,7 @@ server <- function(input, output, session) {
              age <= input$age_range_position[2])
   })
   
-  # Update end_checkpoint choices
+  # Update end_checkpoint choices for Checkpoint tab
   observe({
     req(input$start_checkpoint)
     
@@ -418,6 +562,23 @@ server <- function(input, output, session) {
     updateSelectInput(session, "end_checkpoint", choices = choices)
   })
   
+  # Update end_checkpoint choices for Splits tab
+  observe({
+    req(input$start_checkpoint_splits)
+    
+    start_cp_number <- wser_cp_table %>%
+      filter(cp_column == input$start_checkpoint_splits) %>%
+      pull(cp_number)
+    
+    choices <- wser_cp_table %>%
+      filter(cp_number > start_cp_number) %>%
+      # Use setNames to properly create the choices vector
+      { setNames(.$cp_column, .$cp_display_name) }
+    
+    updateSelectInput(session, "end_checkpoint_splits", choices = choices)
+  })
+  
+  
   # Finish Time Distribution Plot
   output$finish_dist_plot <- renderPlotly({
     # Define colors including a new one for "All"
@@ -430,7 +591,7 @@ server <- function(input, output, session) {
     if (nrow(plot_data) == 0) {
       # Create an empty plot with a message
       p <- ggplot() +
-        annotate("text", x = 0.5, y = 0.5, 
+        annotate("text", x = 0.5, y = 0.5,
                  label = "No data available for the selected filters",
                  size = 6) +
         theme_void() +
@@ -455,7 +616,7 @@ server <- function(input, output, session) {
         
         # DNF plot for single gender
         p <- ggplot(plot_data) +
-          geom_bar(aes(x = as.factor(year), 
+          geom_bar(aes(x = as.factor(year),
                        fill = gender,
                        color = gender),
                    position = "dodge",
@@ -470,7 +631,7 @@ server <- function(input, output, session) {
                y = "Count")
         
         # Convert to plotly and add custom tooltip
-        plt <- ggplotly(p, tooltip = "y") %>% 
+        plt <- ggplotly(p, tooltip = "y") %>%
           config(displayModeBar = FALSE)
         
         # Update tooltip text
@@ -490,7 +651,7 @@ server <- function(input, output, session) {
         
         # DNF plot with both individual genders and "All"
         p <- ggplot(combined_data) +
-          geom_bar(aes(x = as.factor(year), 
+          geom_bar(aes(x = as.factor(year),
                        fill = gender,
                        color = gender),
                    position = "dodge",
@@ -505,7 +666,7 @@ server <- function(input, output, session) {
                y = "Count")
         
         # Convert to plotly and add custom tooltip
-        plt <- ggplotly(p, tooltip = c("gender", "y")) %>% 
+        plt <- ggplotly(p, tooltip = c("gender", "y")) %>%
           config(displayModeBar = FALSE)
         
         # Update tooltip text
@@ -540,7 +701,7 @@ server <- function(input, output, session) {
           facet_wrap(~year)
         
         # Convert to plotly and add custom tooltip
-        plt <- ggplotly(p) %>% 
+        plt <- ggplotly(p) %>%
           config(displayModeBar = FALSE)
         
         # Update tooltip text
@@ -567,7 +728,7 @@ server <- function(input, output, session) {
                          alpha = 0.3,
                          size = 0.5,
                          bins = 30,
-                         position = "identity") + 
+                         position = "identity") +
           scale_fill_manual(values = gender_colors) +
           scale_color_manual(values = gender_colors) +
           scale_x_continuous(breaks = seq(0, 30, by = 5)) +
@@ -579,7 +740,7 @@ server <- function(input, output, session) {
           facet_wrap(~year)
         
         # Convert to plotly and add custom tooltip
-        plt <- ggplotly(p) %>% 
+        plt <- ggplotly(p) %>%
           config(displayModeBar = FALSE)
         
         # Update tooltip text
@@ -761,13 +922,13 @@ server <- function(input, output, session) {
         time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
         time_diff_hms = as_hms(round(time_diff, 0)) # Time in HH:MM:SS format
       ) %>%
-      filter(!is.na(time_diff)) 
+      filter(!is.na(time_diff))
     
     # Check if we have any data
     if (nrow(plot_data) == 0) {
       # Create an empty plot with a message
       p <- ggplot() +
-        annotate("text", x = 0.5, y = 0.5, 
+        annotate("text", x = 0.5, y = 0.5,
                  label = "No data available for the selected filters",
                  size = 6) +
         theme_void() +
@@ -784,13 +945,13 @@ server <- function(input, output, session) {
       min()
     
     base_plot <- ggplot(plot_data) +
-      geom_point(aes(x = age, 
+      geom_point(aes(x = age,
                      y = time_diff,
                      color = gender,
                      text = paste0("gender: ", gender,
                                    "<br>age: ", age,
-                                   "<br>", 
-                                   checkpoint_names[input$start_checkpoint], " - ", 
+                                   "<br>",
+                                   checkpoint_names[input$start_checkpoint], " - ",
                                    checkpoint_names[input$end_checkpoint], ": ",
                                    time_diff_hms)),
                  alpha = 0.6) +
@@ -807,16 +968,16 @@ server <- function(input, output, session) {
     # Add smooth lines only if we have enough data
     if (min_group_size >= 5) {
       p <- base_plot +
-        geom_smooth(aes(x = age, 
+        geom_smooth(aes(x = age,
                         y = time_diff,
-                        color = gender), 
+                        color = gender),
                     method = "loess",
                     se = TRUE)
     } else {
       p <- base_plot
     }
     
-    plt <- ggplotly(p, tooltip = "text") %>% 
+    plt <- ggplotly(p, tooltip = "text") %>%
       config(displayModeBar = FALSE)
     
     # Remove hover info from smooth lines if they exist
@@ -870,6 +1031,194 @@ server <- function(input, output, session) {
         searching = FALSE,
         columnDefs = list(list(className = 'dt-center', targets="_all"))),
       rownames = FALSE
+    )
+  })
+  
+  # Splits time format function
+  format_hms <- function(time_hms) {
+    # Convert to seconds first
+    total_seconds <- as.numeric(time_hms)
+    
+    # Round to the nearest second
+    total_seconds <- round(total_seconds)
+    
+    # Calculate minutes and seconds
+    minutes <- floor(total_seconds / 60)
+    seconds <- total_seconds %% 60
+    
+    # Format as "MM:SS"
+    sprintf("%02d:%02d", minutes, seconds)
+  }
+  
+  # Conversion constant: miles to kilometers
+  miles_to_km <- 1.60934
+  
+  # Splits Plot
+  output$splits_plot <- renderPlotly({
+    req(input$start_checkpoint_splits, input$end_checkpoint_splits)
+    
+    # Get pace type from input
+    pace_type <- input$pace_type
+    
+    start_checkpoint_col <- paste0(input$start_checkpoint_splits, "_time")
+    end_checkpoint_col <- paste0(input$end_checkpoint_splits, "_time")
+    
+    # Create a lookup map for checkpoint names
+    checkpoint_names <- setNames(as.character(wser_cp_table$cp_display_name), wser_cp_table$cp_column)
+    start_cp_name <- checkpoint_names[input$start_checkpoint_splits]
+    end_cp_name <- checkpoint_names[input$end_checkpoint_splits]
+    
+    start_cp_dist <- wser_cp_table %>% filter(cp_column == input$start_checkpoint_splits) %>% pull(cp_miles)
+    end_cp_dist <- wser_cp_table %>% filter(cp_column == input$end_checkpoint_splits) %>% pull(cp_miles)
+    distance_diff_miles <- end_cp_dist - start_cp_dist
+    
+    # Convert distance to km if needed
+    distance_diff_km <- distance_diff_miles * miles_to_km
+    
+    # Calculate the difference and pace before plotting
+    plot_data <- filtered_wser_splits_splits() %>%
+      mutate(
+        time_diff_hours = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
+        time_diff_minutes = time_diff_hours / 60,
+        split_pace_min_per_mile = time_diff_minutes / distance_diff_miles,
+        split_pace_min_per_km = time_diff_minutes / distance_diff_km
+      ) %>%
+      filter(if (pace_type == "mins_per_mile") !is.na(split_pace_min_per_mile) else !is.na(split_pace_min_per_km))
+    
+    # Check if we have any data
+    if (nrow(plot_data) == 0) {
+      # Create an empty plot with a message
+      p <- ggplot() +
+        annotate("text", x = 0.5, y = 0.5,
+                 label = "No data available for the selected filters",
+                 size = 6) +
+        theme_void() +
+        xlim(0, 1) + ylim(0, 1)
+      
+      return(ggplotly(p) %>% config(displayModeBar = FALSE))
+    }
+    
+    # Set y variable and pace unit label based on selected pace type
+    y_var <- if (pace_type == "mins_per_mile") "split_pace_min_per_mile" else "split_pace_min_per_km"
+    pace_unit_label <- if (pace_type == "mins_per_mile") "min/mile" else "min/km"
+    
+    # Check if we have enough data for smoothing (at least 5 points per group)
+    min_group_size <- plot_data %>%
+      group_by(gender) %>%
+      summarise(n = n()) %>%
+      pull(n) %>%
+      min()
+    
+    base_plot <- ggplot(plot_data) +
+      geom_point(aes(x = age,
+                     y = !!sym(y_var),
+                     color = gender,
+                     text = paste0("gender: ", gender,
+                                   "<br>age: ", age,
+                                   "<br>",
+                                   start_cp_name, " - ",
+                                   end_cp_name, " Split Pace: ",
+                                   round(!!sym(y_var), 2), " ", pace_unit_label)),
+                 alpha = 0.6) +
+      theme_minimal() +
+      scale_color_manual(values = gender_colors) +
+      labs(title = paste("Split Pace vs Age Between",
+                         start_cp_name,
+                         "and",
+                         end_cp_name),
+           x = "Age",
+           y = paste("Split Pace (", pace_unit_label, ")", sep = ""))
+    
+    # Add smooth lines only if we have enough data
+    if (min_group_size >= 5) {
+      p <- base_plot +
+        geom_smooth(aes(x = age,
+                        y = !!sym(y_var),
+                        color = gender),
+                    method = "loess",
+                    se = TRUE)
+    } else {
+      p <- base_plot
+    }
+    
+    plt <- ggplotly(p, tooltip = "text") %>%
+      config(displayModeBar = FALSE)
+    
+    # Remove hover info from smooth lines if they exist
+    for(i in seq_along(plt$x$data)) {
+      if(plt$x$data[[i]]$type == "scatter" && plt$x$data[[i]]$mode == "lines") {
+        plt$x$data[[i]]$hoverinfo <- "skip"
+      }
+    }
+    
+    plt
+  })
+  
+  
+  output$splits_summary_table <- renderDT({
+    req(input$start_checkpoint_splits, input$end_checkpoint_splits)
+    
+    # Get pace type from input
+    pace_type <- input$pace_type
+    
+    start_checkpoint_col <- paste0(input$start_checkpoint_splits, "_time")
+    end_checkpoint_col <- paste0(input$end_checkpoint_splits, "_time")
+    
+    start_cp_dist <- wser_cp_table %>% filter(cp_column == input$start_checkpoint_splits) %>% pull(cp_miles)
+    end_cp_dist <- wser_cp_table %>% filter(cp_column == input$end_checkpoint_splits) %>% pull(cp_miles)
+    distance_diff_miles <- end_cp_dist - start_cp_dist
+    
+    # Convert distance to km if needed
+    distance_diff_km <- distance_diff_miles * miles_to_km
+    
+    summary_data <- filtered_wser_splits_splits()
+    if(nrow(summary_data) == 0) {
+      return(DT::datatable(tibble("No data available for selected criteria"), options = list(dom = 't'), rownames = FALSE))
+    }
+    
+    # Determine which pace to use and appropriate column labels
+    pace_var <- if (pace_type == "mins_per_mile") "split_pace_min_per_mile" else "split_pace_min_per_km"
+    pace_label <- if (pace_type == "mins_per_mile") "min/mile" else "min/km"
+    
+    summary_data <- summary_data %>%
+      filter(!is.na(!!sym(start_checkpoint_col)), !is.na(!!sym(end_checkpoint_col))) %>%
+      mutate(
+        time_diff_hours = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
+        time_diff_minutes = time_diff_hours * 60,
+        split_pace_min_per_mile = time_diff_minutes / distance_diff_miles,
+        split_pace_min_per_km = time_diff_minutes / distance_diff_km
+      )
+    
+    split_summary_table <- summary_data %>%
+      group_by(year, gender) %>%
+      summarise(
+        runners = n(),
+        avg_split = as_hms(round(mean(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
+        median_split = as_hms(round(median(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
+        min_split = as_hms(round(min(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
+        max_split = as_hms(round(max(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
+        
+        avg_split = format_hms(avg_split),
+        median_split = format_hms(median_split),
+        min_split = format_hms(min_split),
+        max_split = format_hms(max_split)
+      ) %>%
+      arrange(year, gender)
+    
+    col_names <- c('Year', 'Gender', 'Runners', 
+                   paste('Avg Split (', pace_label, ')', sep = ''), 
+                   paste('Median Split (', pace_label, ')', sep = ''), 
+                   paste('Min Split (', pace_label, ')', sep = ''), 
+                   paste('Max Split (', pace_label, ')', sep = ''))
+    
+    DT::datatable(
+      split_summary_table,
+      options = list(
+        paging = FALSE,
+        searching = FALSE,
+        columnDefs = list(list(className = 'dt-center', targets="_all"))),
+      rownames = FALSE,
+      colnames = col_names
     )
   })
   
