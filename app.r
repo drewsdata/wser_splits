@@ -182,7 +182,7 @@ ui <- fluidPage(
                  ),
                  # Course Checkpoints header with external WSER ref
                  tags$h4("Checkpoint distances:", tags$br(),
-                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years."), #tags$br(),
+                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years. A small number of missing checkpoint observations are excluded from the 'Checkpoints' and 'Splits data."), #tags$br(),
                          tags$a("Check here for WSER offical aid stations",
                                 href = "https://www.wser.org/course/aid-stations/",
                                 target = "_blank",  # Opens in new tab
@@ -196,7 +196,7 @@ ui <- fluidPage(
                )
              )
     ),
-
+    
     # Splits Analysis Tab
     tabPanel("Splits",
              sidebarLayout(
@@ -274,7 +274,7 @@ ui <- fluidPage(
                  
                  # Course Checkpoints header with external WSER ref
                  tags$h4("Checkpoint distances:", tags$br(),
-                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years."), #tags$br(),
+                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years. A small number of missing checkpoint observations are excluded from the 'Checkpoints' and 'Splits data."), #tags$br(),
                          tags$a("Check here for WSER offical aid stations",
                                 href = "https://www.wser.org/course/aid-stations/",
                                 target = "_blank",  # Opens in new tab
@@ -367,7 +367,7 @@ ui <- fluidPage(
 # Server logic
 server <- function(input, output, session) {
   
-  gender_colors <- c("M" = "#0BB8E7", "F" = "#FF6B88")
+  gender_colors <- c("M" = "#0BB8E7", "F" = "#FF6B88", "All" = "#8B8B8B")
   
   # Add output for course checkpoints table
   output$course_checkpoints_table <- renderDT({
@@ -937,45 +937,98 @@ server <- function(input, output, session) {
       return(ggplotly(p) %>% config(displayModeBar = FALSE))
     }
     
-    # Check if we have enough data for smoothing (at least 5 points per group)
-    min_group_size <- plot_data %>%
-      group_by(gender) %>%
-      summarise(n = n()) %>%
-      pull(n) %>%
-      min()
-    
-    base_plot <- ggplot(plot_data) +
-      geom_point(aes(x = age,
-                     y = time_diff,
-                     color = gender,
-                     text = paste0("gender: ", gender,
-                                   "<br>age: ", age,
-                                   "<br>",
-                                   checkpoint_names[input$start_checkpoint], " - ",
-                                   checkpoint_names[input$end_checkpoint], ": ",
-                                   time_diff_hms)),
-                 alpha = 0.6) +
-      theme_minimal() +
-      scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
-      scale_color_manual(values = gender_colors) +
-      labs(title = paste("Time vs Age Between",
-                         checkpoint_names[input$start_checkpoint],
-                         "and",
-                         checkpoint_names[input$end_checkpoint]),
-           x = "Age",
-           y = "Time (hh:mm:ss)")
-    
-    # Add smooth lines only if we have enough data
-    if (min_group_size >= 5) {
-      p <- base_plot +
-        geom_smooth(aes(x = age,
-                        y = time_diff,
-                        color = gender),
-                    method = "loess",
-                    se = TRUE)
+    if (input$gender_checkpoint != "All") {
+      plot_data_gender <- plot_data %>% filter(gender == input$gender_checkpoint)
+      
+      # Check if we have enough data for smoothing (at least 5 points per group)
+      min_group_size <- plot_data_gender %>%
+        group_by(gender) %>%
+        summarise(n = n()) %>%
+        pull(n) %>%
+        min()
+      
+      base_plot <- ggplot(plot_data_gender) +
+        geom_point(aes(x = age,
+                       y = time_diff,
+                       color = gender,
+                       text = paste0("gender: ", gender,
+                                     "<br>age: ", age,
+                                     "<br>",
+                                     checkpoint_names[input$start_checkpoint], " - ",
+                                     checkpoint_names[input$end_checkpoint], ": ",
+                                     time_diff_hms)),
+                   alpha = 0.6) +
+        theme_minimal() +
+        scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
+        scale_color_manual(values = gender_colors) +
+        labs(title = paste("Time vs Age Between",
+                           checkpoint_names[input$start_checkpoint],
+                           "and",
+                           checkpoint_names[input$end_checkpoint]),
+             x = "Age",
+             y = "Time (hh:mm:ss)")
+      
+      # Add smooth lines only if we have enough data
+      if (min_group_size >= 5) {
+        p <- base_plot +
+          geom_smooth(aes(x = age,
+                          y = time_diff,
+                          color = gender),
+                      method = "loess",
+                      se = TRUE)
+      } else {
+        p <- base_plot
+      }
+      
     } else {
-      p <- base_plot
+      # Create combined data for "All" category
+      all_data_cp <- plot_data %>%
+        mutate(gender = "All")
+      
+      # Combine original and "All" data
+      combined_data_cp <- bind_rows(plot_data, all_data_cp)
+      
+      # Check if we have enough data for smoothing (at least 5 points per group)
+      min_group_size <- combined_data_cp %>%
+        group_by(gender) %>%
+        summarise(n = n()) %>%
+        pull(n) %>%
+        min()
+      
+      base_plot <- ggplot(combined_data_cp) +
+        geom_point(aes(x = age,
+                       y = time_diff,
+                       color = gender,
+                       text = paste0("gender: ", gender,
+                                     "<br>age: ", age,
+                                     "<br>",
+                                     checkpoint_names[input$start_checkpoint], " - ",
+                                     checkpoint_names[input$end_checkpoint], ": ",
+                                     time_diff_hms)),
+                   alpha = 0.6) +
+        theme_minimal() +
+        scale_y_time(labels = function(x) strftime(x, format = "%H:%M:%S")) +
+        scale_color_manual(values = gender_colors) +
+        labs(title = paste("Time vs Age Between",
+                           checkpoint_names[input$start_checkpoint],
+                           "and",
+                           checkpoint_names[input$end_checkpoint]),
+             x = "Age",
+             y = "Time (hh:mm:ss)")
+      
+      # Add smooth lines only if we have enough data
+      if (min_group_size >= 5) {
+        p <- base_plot +
+          geom_smooth(aes(x = age,
+                          y = time_diff,
+                          color = gender),
+                      method = "loess",
+                      se = TRUE)
+      } else {
+        p <- base_plot
+      }
     }
+    
     
     plt <- ggplotly(p, tooltip = "text") %>%
       config(displayModeBar = FALSE)
@@ -1003,29 +1056,47 @@ server <- function(input, output, session) {
         time_diff = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col)
       )
     
-    DT::datatable(
-      summary_data %>%
-        group_by(year, gender) %>%
+    summary_table <- summary_data %>%
+      group_by(year, gender) %>%
+      summarise(
+        runners = n(),
+        avg_decimal_hours = mean(time_diff, na.rm = TRUE),
+        avg_seconds = avg_decimal_hours,
+        avg_time = as_hms(round(avg_seconds,0)),
+        median_decimal_hours = median(time_diff, na.rm = TRUE),
+        median_seconds = median_decimal_hours,
+        median_time = as_hms(round(median_seconds, 0)),
+        min_decimal_hours = min(time_diff, na.rm = TRUE),
+        min_seconds = min_decimal_hours,
+        min_time = as_hms(round(min_seconds,0)),
+        max_decimal_hours = max(time_diff, na.rm = TRUE),
+        max_seconds = max_decimal_hours,
+        max_time = as_hms(round(max_seconds,0))
+      ) %>%
+      select(-c(avg_decimal_hours,avg_seconds)) %>%
+      select(-c(median_decimal_hours,median_seconds)) %>%
+      select(-c(min_decimal_hours,min_seconds)) %>%
+      select(-c(max_decimal_hours,max_seconds)) %>%
+      arrange(year, gender)
+    
+    if (input$gender_checkpoint == "All") {
+      all_gender_summary_cp <- summary_table %>%
+        group_by(year) %>%
         summarise(
-          runners = n(),
-          avg_decimal_hours = mean(time_diff, na.rm = TRUE),
-          avg_seconds = avg_decimal_hours,
-          avg_time = as_hms(round(avg_seconds,0)),
-          median_decimal_hours = median(time_diff, na.rm = TRUE),
-          median_seconds = median_decimal_hours,
-          median_time = as_hms(round(median_seconds, 0)),
-          min_decimal_hours = min(time_diff, na.rm = TRUE),
-          min_seconds = min_decimal_hours,
-          min_time = as_hms(round(min_seconds,0)),
-          max_decimal_hours = max(time_diff, na.rm = TRUE),
-          max_seconds = max_decimal_hours,
-          max_time = as_hms(round(max_seconds,0))
-        ) %>%
-        select(-c(avg_decimal_hours,avg_seconds)) %>%
-        select(-c(median_decimal_hours,median_seconds)) %>%
-        select(-c(min_decimal_hours,min_seconds)) %>%
-        select(-c(max_decimal_hours,max_seconds)) %>%
-        arrange(year, gender),
+          gender = "All",
+          runners = sum(runners),
+          avg_time = as_hms(round(mean(as.numeric(avg_time), na.rm = TRUE), 0)), # Convert hms to seconds, average, then back to hms
+          median_time = as_hms(round(median(as.numeric(median_time), na.rm = TRUE), 0)),
+          min_time = as_hms(round(min(as.numeric(min_time), na.rm = TRUE), 0)),
+          max_time = as_hms(round(max(as.numeric(max_time), na.rm = TRUE), 0))
+        )
+      summary_table <- bind_rows(summary_table, all_gender_summary_cp)
+    }
+    summary_table <- summary_table %>%
+      arrange(year, desc(gender)) # Place "All" at the top for each year
+    
+    DT::datatable(
+      summary_table,
       options = list(
         paging = FALSE,
         searching = FALSE,
@@ -1102,44 +1173,96 @@ server <- function(input, output, session) {
     y_var <- if (pace_type == "mins_per_mile") "split_pace_min_per_mile" else "split_pace_min_per_km"
     pace_unit_label <- if (pace_type == "mins_per_mile") "min/mile" else "min/km"
     
-    # Check if we have enough data for smoothing (at least 5 points per group)
-    min_group_size <- plot_data %>%
-      group_by(gender) %>%
-      summarise(n = n()) %>%
-      pull(n) %>%
-      min()
     
-    base_plot <- ggplot(plot_data) +
-      geom_point(aes(x = age,
-                     y = !!sym(y_var),
-                     color = gender,
-                     text = paste0("gender: ", gender,
-                                   "<br>age: ", age,
-                                   "<br>",
-                                   start_cp_name, " - ",
-                                   end_cp_name, " Split Pace: ",
-                                   round(!!sym(y_var), 2), " ", pace_unit_label)),
-                 alpha = 0.6) +
-      theme_minimal() +
-      scale_color_manual(values = gender_colors) +
-      labs(title = paste("Split Pace vs Age Between",
-                         start_cp_name,
-                         "and",
-                         end_cp_name),
-           x = "Age",
-           y = paste("Split Pace (", pace_unit_label, ")", sep = ""))
-    
-    # Add smooth lines only if we have enough data
-    if (min_group_size >= 5) {
-      p <- base_plot +
-        geom_smooth(aes(x = age,
-                        y = !!sym(y_var),
-                        color = gender),
-                    method = "loess",
-                    se = TRUE)
+    if (input$gender_splits != "All") {
+      plot_data_gender <- plot_data %>% filter(gender == input$gender_splits)
+      
+      # Check if we have enough data for smoothing (at least 5 points per group)
+      min_group_size <- plot_data_gender %>%
+        group_by(gender) %>%
+        summarise(n = n()) %>%
+        pull(n) %>%
+        min()
+      
+      base_plot <- ggplot(plot_data_gender) +
+        geom_point(aes(x = age,
+                       y = !!sym(y_var),
+                       color = gender,
+                       text = paste0("gender: ", gender,
+                                     "<br>age: ", age,
+                                     "<br>",
+                                     start_cp_name, " - ",
+                                     end_cp_name, " Split Pace: ",
+                                     round(!!sym(y_var), 2), " ", pace_unit_label)),
+                   alpha = 0.6) +
+        theme_minimal() +
+        scale_color_manual(values = gender_colors) +
+        labs(title = paste("Split Pace vs Age Between",
+                           start_cp_name,
+                           "and",
+                           end_cp_name),
+             x = "Age",
+             y = paste("Split Pace (", pace_unit_label, ")", sep = ""))
+      
+      # Add smooth lines only if we have enough data
+      if (min_group_size >= 5) {
+        p <- base_plot +
+          geom_smooth(aes(x = age,
+                          y = !!sym(y_var),
+                          color = gender),
+                      method = "loess",
+                      se = TRUE)
+      } else {
+        p <- base_plot
+      }
     } else {
-      p <- base_plot
+      # Create combined data for "All" category
+      all_data_splits <- plot_data %>%
+        mutate(gender = "All")
+      
+      # Combine original and "All" data
+      combined_data_splits <- bind_rows(plot_data, all_data_splits)
+      
+      # Check if we have enough data for smoothing (at least 5 points per group)
+      min_group_size <- combined_data_splits %>%
+        group_by(gender) %>%
+        summarise(n = n()) %>%
+        pull(n) %>%
+        min()
+      
+      base_plot <- ggplot(combined_data_splits) +
+        geom_point(aes(x = age,
+                       y = !!sym(y_var),
+                       color = gender,
+                       text = paste0("gender: ", gender,
+                                     "<br>age: ", age,
+                                     "<br>",
+                                     start_cp_name, " - ",
+                                     end_cp_name, " Split Pace: ",
+                                     round(!!sym(y_var), 2), " ", pace_unit_label)),
+                   alpha = 0.6) +
+        theme_minimal() +
+        scale_color_manual(values = gender_colors) +
+        labs(title = paste("Split Pace vs Age Between",
+                           start_cp_name,
+                           "and",
+                           end_cp_name),
+             x = "Age",
+             y = paste("Split Pace (", pace_unit_label, ")", sep = ""))
+      
+      # Add smooth lines only if we have enough data
+      if (min_group_size >= 5) {
+        p <- base_plot +
+          geom_smooth(aes(x = age,
+                          y = !!sym(y_var),
+                          color = gender),
+                      method = "loess",
+                      se = TRUE)
+      } else {
+        p <- base_plot
+      }
     }
+    
     
     plt <- ggplotly(p, tooltip = "text") %>%
       config(displayModeBar = FALSE)
@@ -1184,7 +1307,7 @@ server <- function(input, output, session) {
       filter(!is.na(!!sym(start_checkpoint_col)), !is.na(!!sym(end_checkpoint_col))) %>%
       mutate(
         time_diff_hours = !!sym(end_checkpoint_col) - !!sym(start_checkpoint_col),
-        time_diff_minutes = time_diff_hours * 60,
+        time_diff_minutes = time_diff_hours / 60,
         split_pace_min_per_mile = time_diff_minutes / distance_diff_miles,
         split_pace_min_per_km = time_diff_minutes / distance_diff_km
       )
@@ -1193,22 +1316,41 @@ server <- function(input, output, session) {
       group_by(year, gender) %>%
       summarise(
         runners = n(),
-        avg_split = as_hms(round(mean(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
-        median_split = as_hms(round(median(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
-        min_split = as_hms(round(min(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
-        max_split = as_hms(round(max(!!sym(pace_var), na.rm = TRUE) / 60, 0)),
-        
-        avg_split = format_hms(avg_split),
-        median_split = format_hms(median_split),
-        min_split = format_hms(min_split),
-        max_split = format_hms(max_split)
+        avg_split = mean(!!sym(pace_var), na.rm = TRUE), # Keep as numeric for now
+        median_split = median(!!sym(pace_var), na.rm = TRUE),
+        min_split = min(!!sym(pace_var), na.rm = TRUE),
+        max_split = max(!!sym(pace_var), na.rm = TRUE)
       ) %>%
       arrange(year, gender)
     
-    col_names <- c('Year', 'Gender', 'Runners', 
-                   paste('Avg Split (', pace_label, ')', sep = ''), 
-                   paste('Median Split (', pace_label, ')', sep = ''), 
-                   paste('Min Split (', pace_label, ')', sep = ''), 
+    if (input$gender_splits == "All") {
+      all_gender_summary_splits <- split_summary_table %>%
+        group_by(year) %>%
+        summarise(
+          gender = "All",
+          runners = sum(runners),
+          avg_split = mean(avg_split, na.rm = TRUE),
+          median_split = median(median_split, na.rm = TRUE),
+          min_split = min(min_split, na.rm = TRUE),
+          max_split = max(max_split, na.rm = TRUE)
+        )
+      split_summary_table <- bind_rows(split_summary_table, all_gender_summary_splits)
+    }
+    
+    split_summary_table <- split_summary_table %>%
+      mutate(
+        avg_split = format_hms(as_hms(round(avg_split * 60, 0))), # Format back to MM:SS
+        median_split = format_hms(as_hms(round(median_split * 60, 0))),
+        min_split = format_hms(as_hms(round(min_split * 60, 0))),
+        max_split = format_hms(as_hms(round(max_split * 60, 0)))
+      ) %>%
+      arrange(year, desc(gender)) # Place "All" at the top for each year
+    
+    
+    col_names <- c('Year', 'Gender', 'Runners',
+                   paste('Avg Split (', pace_label, ')', sep = ''),
+                   paste('Median Split (', pace_label, ')', sep = ''),
+                   paste('Min Split (', pace_label, ')', sep = ''),
                    paste('Max Split (', pace_label, ')', sep = ''))
     
     DT::datatable(
