@@ -2658,11 +2658,17 @@
     }
   },
   "files": {
-    "app_pre_spin.r": {
-      "checksum": "c5986345945c348da4a8f4a877282ab5"
+    "add_splits_test.r": {
+      "checksum": "7faf7119ea376c037b3a3adfc88df6aa"
+    },
+    "add_splits.r": {
+      "checksum": "7faf7119ea376c037b3a3adfc88df6aa"
     },
     "app.r": {
-      "checksum": "0147924be61d4261b3e693e1fe438d67"
+      "checksum": "b2059096750d68dd78c1481c7bd63783"
+    },
+    "data/.~lock.wser_split_data_2017_2024.csv#": {
+      "checksum": "51fcceb96d534f4e94b7c62fa9d4b655"
     },
     "data/time.txt": {
       "checksum": "c6bb4c15efd958302b9f46b4de0a8e44"
@@ -2676,11 +2682,14 @@
     "data/wser_cp_table.txt": {
       "checksum": "e64164aa1802a2dca2d00ddc35567f61"
     },
+    "data/wser_split_data_2017_2024 (copy).csv": {
+      "checksum": "373154c4a1518b145775b21eec629cdd"
+    },
     "data/wser_split_data_2017_2024.csv": {
-      "checksum": "2024e130e57d7bc9a01fecc91baa27a6"
+      "checksum": "609d3e8fc7e87771c651cbe04c4a7f44"
     },
     "data/wser_splitproject.html": {
-      "checksum": "aea611e7e608d3f6a4c5771df706b2a1"
+      "checksum": "031bb87ca83594998677b574f93e26ed"
     },
     "LICENSE": {
       "checksum": "aa5661f2ee3952399746c99fa08d8ccc"
@@ -2688,8 +2697,20 @@
     "plots/year_ridge_plot.png": {
       "checksum": "8249f7f60662477491e26752795e54b1"
     },
+    "server_only_update.r": {
+      "checksum": "89ed7d629fdbaa8954ef74b0f0a4d4cd"
+    },
+    "server_update.r": {
+      "checksum": "1cc7a318b9f0e192f71322e4e5da8f5a"
+    },
+    "test_app_pre_splits_updated.r": {
+      "checksum": "63ad9f9004cfcf6ca4eacca578c6e1b7"
+    },
+    "test_app_pre_splits.r": {
+      "checksum": "25cc3062dd52ca178b3e7b9de4d14760"
+    },
     "test_app.r": {
-      "checksum": "0147924be61d4261b3e693e1fe438d67"
+      "checksum": "b2059096750d68dd78c1481c7bd63783"
     },
     "year_ridge_plot.r": {
       "checksum": "bc2416dbe656460a32ec270bea3ecb9e"
