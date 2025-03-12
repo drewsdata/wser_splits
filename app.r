@@ -184,7 +184,7 @@ ui <- fluidPage(
                  ),
                  # Course Checkpoints header with external WSER ref
                  tags$h4("Checkpoint distances:", tags$br(),
-                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years. A small number of missing checkpoint observations are excluded from the 'Checkpoints' and 'Splits' data."), #tags$br(),
+                         tags$h5("Note, Dardanelles (Cal-1) and Ford's Bar (Cal-3) are missing in the analysis due to incomplete data for all years. A small number of missing or incorrectly recorded observations are excluded from the 'Checkpoints' and 'Splits' data."), #tags$br(),
                          tags$a("Check here for WSER offical aid stations",
                                 href = "https://www.wser.org/course/aid-stations/",
                                 target = "_blank",  # Opens in new tab
