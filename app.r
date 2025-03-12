@@ -161,8 +161,10 @@ ui <- fluidPage(
                  # Checkpoint selectors
                  selectInput("start_checkpoint",
                              "Select Start Checkpoint:",
-                             choices = setNames(wser_cp_table$cp_column,
-                                                wser_cp_table$cp_display_name)
+                             choices = setNames(
+                               filter(wser_cp_table, cp_column != "finish")$cp_column,
+                               filter(wser_cp_table, cp_column != "finish")$cp_display_name
+                             )
                  ),
                  
                  selectInput("end_checkpoint",
@@ -246,8 +248,10 @@ ui <- fluidPage(
                  # Checkpoint selectors
                  selectInput("start_checkpoint_splits",
                              "Select Start Checkpoint:",
-                             choices = setNames(wser_cp_table$cp_column,
-                                                wser_cp_table$cp_display_name)
+                             choices = setNames(
+                               filter(wser_cp_table, cp_column != "finish")$cp_column,
+                               filter(wser_cp_table, cp_column != "finish")$cp_display_name
+                             )
                  ),
                  
                  selectInput("end_checkpoint_splits",
