@@ -84,7 +84,7 @@ ui <- fluidPage(
                  tags$div(
                    style = "margin-top: 20px;",
                    tags$p(
-                     "As the machine learning folks might say these days, \"Race outcome dependency variables represent a high dimensional space\". This is a fancy way of saying that factors influencing ultramarathon results are numerous and interconnected. In ultrarunning, these factors might include:"
+                     "Race outcomes in ultra marathons depend on numerous interconnected variables that might include:"
                    ),
                    tags$ul(
                      tags$li("Physical factors: training volume, nutrition, hydration, sleep quality"),
@@ -94,13 +94,13 @@ ui <- fluidPage(
                      tags$li("Life context: work-life balance, family support, overall stress levels")
                    ),
                    tags$p(
-                     "Given these complexities, fixating on outcome results like finish times or placing can create unsatisfying experiences.
-                      The rare opportunity to particpate in a special event like the",
+                     "Given these complexities, fixating on results like finish times or placing can create unsatisfying experiences.
+                      The rare opportunity to participate in a special event like the",
                      tags$a("WSER",
                             href = "https://www.wser.org/",
                             target = "_blank",
                             style = "color: #4682B4; text-decoration: none;"),
-                     "may best be appreciated and remembered by enjoying the entire process and journey."
+                     "may best be appreciated and remembered by enjoying the entire process and journey regardless of the outcome."
                    )
                  )
                ),
