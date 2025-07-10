@@ -1,14 +1,26 @@
 ###################################
-
+library(readr)
 library(ggplot2)
 library(dplyr)
 library(lubridate)
 library(ggridges)
 library(hms)
 library(scales)
+library(here)
 
 # Read the CSV file
-data <- read.csv("/home/drew/projects/r/test_wser_plot_data.csv") %>% 
+data <- read_csv(here("data","wser_split_data_2017_2025.csv")) %>% 
+  select(year, time, age) %>% 
+  mutate(
+    result_type = case_when(
+    time == "dnf" ~ "dnf",
+    !is.na(time) & time < 24 ~ "silver",
+    !is.na(time) & time >= 24 & time <= 30 ~ "bronze",
+    TRUE ~ "other"
+  )
+) %>% 
+  filter(result_type != "dnf") %>% 
+# data <- read.csv("/home/drew/projects/r/test_wser_plot_data.csv") %>% 
   setNames(c("event_year","finish_time","runner_age","result_type")) %>% 
   select(event_year,finish_time) %>% 
   mutate(event_year = as.factor(event_year))  %>% 
@@ -31,11 +43,27 @@ myplot <- ggplot(data, aes(x = finish_time, y = factor(event_year), fill = facto
   theme_minimal() +
   theme(legend.position = "none") 
 
+
 # summary stats
-data <- read.csv("/home/drew/projects/r/test_wser_plot_data.csv") %>% 
+# data <- read.csv("/home/drew/projects/r/test_wser_plot_data.csv") %>% 
+#   setNames(c("event_year","finish_time","runner_age","result_type")) %>% 
+#   select(event_year,finish_time) %>% 
+#   mutate(event_year = as.factor(event_year)) 
+data <- read_csv(here("data","wser_split_data_2017_2025.csv")) %>% 
+  select(year, time, age) %>% 
+  mutate(
+    result_type = case_when(
+      time == "dnf" ~ "dnf",
+      !is.na(time) & time < 24 ~ "silver",
+      !is.na(time) & time >= 24 & time <= 30 ~ "bronze",
+      TRUE ~ "other"
+    )
+  ) %>% 
+  filter(result_type != "dnf") %>% 
+  # data <- read.csv("/home/drew/projects/r/test_wser_plot_data.csv") %>% 
   setNames(c("event_year","finish_time","runner_age","result_type")) %>% 
   select(event_year,finish_time) %>% 
-  mutate(event_year = as.factor(event_year)) 
+  mutate(event_year = as.factor(event_year))
 
 convert_to_hours <- function(time_str) {
   if (is.character(time_str)) {
