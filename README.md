@@ -1,0 +1,1 @@
+This is an analysis of timing data from the Western States Endurance Run (https://www.wser.org/). It has been used by runners to successfully plan for and complete the world's oldest and most coveted 100 mile endurance trail run.
